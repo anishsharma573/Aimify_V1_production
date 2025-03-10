@@ -11,17 +11,17 @@ const app = express()
 
 // ----middleware---->>>
 
-//cors who can talk to the database
-// app.use(
-//     cors({
-// //       origin: process.env.CORS_ORIGIN || "http://localhost:5173", // Frontend URL
-// //       credentials: true, // Allow cookies to be sent
-// //       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow these HTTP methods
-// //       allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
-// //     })
-// //   );
+// cors who can talk to the database
+app.use(
+    cors({
+      origin: process.env.CORS_ORIGIN || "http://localhost:5173", // Frontend URL
+      credentials: true, // Allow cookies to be sent
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow these HTTP methods
+      allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
+    })
+  );
   
-//   app.options("*", cors());
+  app.options("*", cors());
 // --- express middleware --->>
 
 app.use(express.json());
@@ -38,11 +38,15 @@ app.use(cookieParser())
 import userRoutes from "./routes/user.routes.js"
 import schooladminRoutes from "./routes/schooladmin.routes.js"
 import QuestionRoutes from "./routes/question.routes.js"
+import studentRoutes from "./routes/student.routes.js"
+import teacherRoutes from "./routes/teacher.routes.js"
 
 //routes 
 app.use("/api/v1/users",userRoutes)
 app.use("/api/v1/schooladmin",schooladminRoutes)
 app.use("/api/v1/questions",QuestionRoutes)
+app.use("/api/v1/student",studentRoutes)
+app.use("/api/v1/teacher",teacherRoutes)
 
 
 export default app

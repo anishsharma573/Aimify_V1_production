@@ -6,6 +6,10 @@ const questionSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    class:{
+        type: String,
+        required: true
+    },
     questionType: {
         type: String,
         enum: ['MCQ', 'TRUE_FALSE', 'SHORT_ANSWER', 'FILL_IN_THE_BLANK', 'MATCHING', 'ESSAY', 'CODING'],
@@ -15,32 +19,38 @@ const questionSchema = new mongoose.Schema({
         type: [String], // Only for MCQ & TRUE_FALSE
         validate: {
             validator: function (value) {
-                return this.questionType === 'MCQ' || this.questionType === 'TRUE_FALSE' ? Array.isArray(value) && value.length > 0 : true;
+                if (this.questionType === 'MCQ' || this.questionType === 'TRUE_FALSE') {
+                    return Array.isArray(value) && value.length > 0;
+                }
+                return true;
             },
             message: 'Options are required for MCQ and TRUE_FALSE questions.'
         }
     },
     correctAnswer: {
-        type: mongoose.Schema.Types.Mixed, // String, Array, or Object depending on type
-        required: true
+        type: mongoose.Schema.Types.Mixed, // Could be a String, Array, or Object depending on type
+        required: false
+        // Optionally, add custom validation based on questionType
     },
     difficulty: {
         type: String,
         enum: ['Easy', 'Medium', 'Hard'],
-        default: 'Medium'
+        default: 'Easy'
     },
     subject: {
-        type: String, // Example: 'Mathematics', 'Science'
+        type: String,
         required: true,
-        trim: true
+        trim: true,
+        index: true  // Added index for improved query performance
     },
     topic: {
-        type: String, // Broad category under subject
+        type: String,
         required: true,
-        trim: true
+        trim: true,
+        index: true  // Added index for improved query performance
     },
     subTopic: {
-        type: String, // More specific within the topic
+        type: String,
         trim: true
     },
     tags: {
@@ -48,7 +58,7 @@ const questionSchema = new mongoose.Schema({
         default: []
     },
     explanation: {
-        type: String, // Explanation for correct answer
+        type: String,
         default: ''
     },
     matchingPairs: {
@@ -58,7 +68,10 @@ const questionSchema = new mongoose.Schema({
         }],
         validate: {
             validator: function (value) {
-                return this.questionType === 'MATCHING' ? Array.isArray(value) && value.length > 0 : true;
+                if (this.questionType === 'MATCHING') {
+                    return Array.isArray(value) && value.length > 0;
+                }
+                return true;
             },
             message: 'Matching pairs are required for MATCHING questions.'
         }
@@ -71,7 +84,7 @@ const questionSchema = new mongoose.Schema({
             }
         },
         functionSignature: {
-            type: String, // Expected function format (e.g., "def add(a, b):")
+            type: String,
             required: function () {
                 return this.questionType === 'CODING';
             }
@@ -109,22 +122,9 @@ const questionSchema = new mongoose.Schema({
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],
         default: 'Pending'
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date
     }
-});
-
-// Middleware to update `updatedAt` timestamp
-questionSchema.pre('save', function (next) {
-    this.updatedAt = Date.now();
-    next();
-});
+}, { timestamps: true }); // This option automatically adds createdAt and updatedAt
 
 const Question = mongoose.model('Question', questionSchema);
 
-export default Question
+export default Question;

@@ -105,15 +105,15 @@ const masterAdminLogin = asyncHandler(async (req, res) => {
 
 
 const createSchool = asyncHandler(async (req, res, next) => {
-    const {name,address,logo,principalName,phoneNumber} = req.body;
+    const {name,address,logo,principalName,phoneNumber,subdomain} = req.body;
     const school = await School.create({
         name,
         address,
         logo,
         principalName,
         phoneNumber,
-     
-            createdBy: {
+        subdomain,
+        createdBy: {
                 _id: req.user._id,
                 username: req.user.username,
                

@@ -13,13 +13,25 @@ const app = express()
 
 // cors who can talk to the database
 app.use(
-    cors({
-      origin: process.env.CORS_ORIGIN || "http://localhost:5173", // Frontend URL
-      credentials: true, // Allow cookies to be sent
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow these HTTP methods
-      allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
-    })
-  );
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if the origin contains "localhost:5173"
+      if (origin.includes("localhost:5173")) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"), false);
+      }
+    },
+    credentials: true, // Allow cookies to be sent
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.options("*", cors());
   
   app.options("*", cors());
 // --- express middleware --->>

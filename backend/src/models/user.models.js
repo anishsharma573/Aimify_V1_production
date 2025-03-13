@@ -52,6 +52,7 @@ const UserSchema = new mongoose.Schema({
         lifeSkills: [{ type: String }],
         technicalSkills: [{ type: String }]
     },
+    
 
     hobbies: [{ type: String }],
 

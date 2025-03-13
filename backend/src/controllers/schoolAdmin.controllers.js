@@ -117,13 +117,14 @@ const addStudent = asyncHandler(async (req, res, next) => {
   if (!school) {
     throw new ApiError(404, "School not found");
   }
-  // Create a slug version of the school name (lowercase, no spaces)
+  // Create a slug version of the school name (uppercase, no spaces)
   const schoolNameSlug = school.subdomain.toUpperCase().replace(/\s+/g, "");
 
   // Get the current count of student records for this school
   let studentCounter = await User.countDocuments({ schoolId: schoolId, role: "student" });
 
   let studentsData = [];
+
   // Process Excel file if provided
   if (req.file) {
     const workbook = xlsx.readFile(req.file.path);
@@ -136,9 +137,20 @@ const addStudent = asyncHandler(async (req, res, next) => {
   } else {
     // Otherwise, expect JSON data in the request body
     if (req.body.students) {
-      studentsData = Array.isArray(req.body.students)
-        ? req.body.students
-        : [req.body.students];
+      // If "students" is a string, parse it to JSON.
+      if (typeof req.body.students === "string") {
+        try {
+          studentsData = JSON.parse(req.body.students);
+        } catch (error) {
+          throw new ApiError(400, "Invalid JSON in students field");
+        }
+      } else {
+        studentsData = req.body.students;
+      }
+      // Ensure we have an array
+      if (!Array.isArray(studentsData)) {
+        studentsData = [studentsData];
+      }
     } else {
       studentsData = [req.body];
     }
@@ -166,7 +178,7 @@ const addStudent = asyncHandler(async (req, res, next) => {
 
     let dateObj;
     try {
-      // Parse the date from the provided format.
+      // Parse the date from the provided format (DD-MM-YYYY).
       dateObj = parseDateFromDDMMYY(student.dateOfBirth);
     } catch (error) {
       throw new ApiError(
@@ -196,7 +208,8 @@ const addStudent = asyncHandler(async (req, res, next) => {
       password: hashedPassword,
       role: "student",
       schoolId: schoolId,
-      dateOfBirth: dateObj, // Store Date object
+      dateOfBirth: dateObj, 
+      class: student.class,
     });
   }
 
@@ -245,8 +258,19 @@ const addTeacher = asyncHandler(async (req, res, next) => {
     throw new ApiError(403, "Not authorized for this school");
   }
 
+  // Retrieve the school document to get the school's name.
+  const school = await School.findById(schoolId);
+  if (!school) {
+    throw new ApiError(404, "School not found");
+  }
+  // Create a slug version of the school name (uppercase, no spaces)
+  const schoolNameSlug = school.subdomain.toUpperCase().replace(/\s+/g, "");
+
+  // Get the current count of teacher records for this school.
+  let teacherCounter = await User.countDocuments({ schoolId: schoolId, role: "teacher" });
+
   let teachersData = [];
-  // Process Excel file if provided
+  // Process Excel file if provided.
   if (req.file) {
     const workbook = xlsx.readFile(req.file.path);
     const sheetName = workbook.SheetNames[0];
@@ -256,43 +280,86 @@ const addTeacher = asyncHandler(async (req, res, next) => {
     }
     teachersData = sheetData;
   } else {
-    // Otherwise, expect JSON data in the request body
+    // Otherwise, expect JSON data in the request body.
     if (req.body.teachers) {
-      teachersData = Array.isArray(req.body.teachers)
-        ? req.body.teachers
-        : [req.body.teachers];
+      // If "teachers" is a string, parse it.
+      if (typeof req.body.teachers === "string") {
+        try {
+          teachersData = JSON.parse(req.body.teachers);
+        } catch (error) {
+          throw new ApiError(400, "Invalid JSON in teachers field");
+        }
+      } else {
+        teachersData = req.body.teachers;
+      }
+      // Ensure teachersData is an array.
+      if (!Array.isArray(teachersData)) {
+        teachersData = [teachersData];
+      }
     } else {
       teachersData = [req.body];
     }
   }
 
-  // Retrieve flag to skip duplicates if needed (defaults to false)
+  // Retrieve flag to skip duplicates if needed (defaults to false).
   const skipDuplicates = req.body.skipDuplicates || false;
   let newTeachersData = [];
 
-  // Process each teacher record
+  // Process each teacher record.
   for (const teacher of teachersData) {
     // Validate required fields.
-    if (!teacher.phone || !teacher.name || !teacher.password) {
+    if (!teacher.phone || !teacher.name) {
       throw new ApiError(
         400,
-        `Phone, name, and password are required for teacher: ${teacher.username || teacher.name}`
+        `Both phone and name are required for teacher: ${teacher.username || teacher.name}`
       );
     }
-    const hashedPassword = await bcrypt.hash(teacher.password, 10);
+    if (!teacher.dateOfBirth) {
+      throw new ApiError(
+        400,
+        `Date of birth is required for teacher: ${teacher.username || teacher.name}`
+      );
+    }
+
+    let dateObj;
+    try {
+      // Parse the date from the provided format (e.g., "DD-MM-YYYY").
+      dateObj = parseDateFromDDMMYY(teacher.dateOfBirth);
+    } catch (error) {
+      throw new ApiError(
+        400,
+        `Invalid dateOfBirth for teacher: ${teacher.username || teacher.name}. ${error.message}`
+      );
+    }
+
+    // Generate password in "DDMMYYYY" format from the parsed date.
+    const day = dateObj.getDate().toString().padStart(2, "0");
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+    const yearFull = dateObj.getFullYear().toString();
+    const rawPassword = `${day}${month}${yearFull}`; // e.g., "16052003"
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+    // Auto-generate username if not provided.
+    let username = teacher.username;
+    if (!username) {
+      teacherCounter++;
+      username = `AIMTECH${schoolNameSlug}${teacherCounter.toString().padStart(5, "0")}`;
+    }
 
     newTeachersData.push({
-      username: teacher.username, // Optional field
+      username, // Auto-generated if not provided.
       phone: teacher.phone,
       name: teacher.name,
       password: hashedPassword,
-      role: "teacher", // Automatically set as teacher
+      role: "teacher",
       schoolId: schoolId,
+      dateOfBirth: dateObj,
+      class: teacher.class, // Optional: use if applicable.
     });
   }
 
-  // Check for duplicate teacher entries based on matching name and phone within the school.
-  const duplicateQueries = newTeachersData.map(t => ({ name: t.name, phone: t.phone }));
+  // Check for duplicate entries based on matching name and phone within the school.
+  const duplicateQueries = newTeachersData.map(u => ({ name: u.name, phone: u.phone }));
   const duplicates = await User.find({ schoolId: schoolId, $or: duplicateQueries });
 
   if (duplicates.length > 0 && !skipDuplicates) {
@@ -306,9 +373,9 @@ const addTeacher = asyncHandler(async (req, res, next) => {
   let skippedDuplicates = [];
   if (duplicates.length > 0 && skipDuplicates) {
     const duplicateSet = duplicates.map(d => `${d.name}_${d.phone}`);
-    newTeachersData = newTeachersData.filter(t => {
-      if (duplicateSet.includes(`${t.name}_${t.phone}`)) {
-        skippedDuplicates.push(t);
+    newTeachersData = newTeachersData.filter(u => {
+      if (duplicateSet.includes(`${u.name}_${u.phone}`)) {
+        skippedDuplicates.push(u);
         return false;
       }
       return true;
@@ -328,4 +395,28 @@ const addTeacher = asyncHandler(async (req, res, next) => {
 });
 
 
-export { addStudent, schoolAdminLogin, addTeacher };
+
+
+
+
+const showStudents = asyncHandler(async (req, res) => {
+  const { schoolId } = req.params;
+  console.log("Received schoolId:", schoolId);
+  const students = await User.find({ schoolId: schoolId, role: "student" });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { students }, "Students retrieved successfully"));
+});
+
+
+
+const showTeacher = asyncHandler(async (req, res) => {
+  const { schoolId } = req.params;
+  console.log("Received schoolId:", schoolId);
+  const students = await User.find({ schoolId: schoolId, role: "teacher" });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { students }, "Students retrieved successfully"));
+});
+
+export { addStudent, schoolAdminLogin, addTeacher ,showStudents ,showTeacher};

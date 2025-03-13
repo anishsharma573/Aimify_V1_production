@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { toast } from "react-toastify";
 import axiosInstance from "../services/api";
 
 const CreateSchool = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
+    subdomain: "",
     address: "",
     logo: "",
     principalName: "",
@@ -14,31 +17,28 @@ const CreateSchool = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Update form values
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      // POST to /users/create-school appended to baseURL ("http://localhost:3000/api/v1")
       const response = await axiosInstance.post("/users/create-school", formData, {
         headers: { "Content-Type": "application/json" },
       });
       const { message: resMessage } = response.data.data || {};
       setMessage(resMessage || "School created successfully");
-      alert("School created successfully!");
-      navigate("/dashboard");
+      toast.success("School created successfully!");
+      navigate("/admin-dashboard");
     } catch (error) {
       console.error("Error creating school:", error);
       setMessage("Error creating school");
-      alert(`Error creating school: ${error.response?.data?.message || error.message}`);
+      toast.error(`Error creating school: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -70,6 +70,21 @@ const CreateSchool = () => {
                 value={formData.name}
                 onChange={handleChange}
                 required
+                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+            <div>
+              <label htmlFor="subdomain" className="block text-sm font-medium text-gray-700 mb-1">
+                Subdomain
+              </label>
+              <input
+                type="text"
+                name="subdomain"
+                id="subdomain"
+                value={formData.subdomain}
+                onChange={handleChange}
+                required
+                placeholder="e.g., nps"
                 className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>

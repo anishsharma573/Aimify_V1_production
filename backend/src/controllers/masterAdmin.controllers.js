@@ -171,13 +171,24 @@ const createSchoolAdmin = asyncHandler(async (req, res, next) => {
 
 
 const allSchools = asyncHandler(async (req, res, next) => {
-        const schools = await School.find({})
-        return res.status(200).json(new ApiResponse(200,{schools,
-                message:"Schools fetched successfully"
-        }))
-})
+    const schools = await School.find({}).lean();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { schools }, "Schools fetched successfully"));
+  });
+  
+
+const  allSchoolsAdmin = asyncHandler(async (req, res, next) => {
+    const schoolAdmins = await User.find({ role: "school_admin" }).lean();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { schoolAdmins }, "School admins fetched successfully"));
+  });
+
+  
 export {Dashboard,
         createSchool,
+        allSchoolsAdmin,
         masterAdminLogin,
         allSchools,
         createSchoolAdmin

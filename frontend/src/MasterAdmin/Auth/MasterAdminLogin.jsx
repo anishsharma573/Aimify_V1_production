@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../services/api";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -11,7 +13,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const data = {
       username: formData.username,
       password: formData.password,
@@ -29,18 +30,18 @@ const Login = () => {
       if (accessToken && refreshToken) {
         localStorage.setItem("token", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
-        alert("Login successful!");
-        navigate("/dashboard");
+        toast.success("Login successful!");
+        navigate("/admin-dashboard");
       } else {
         console.error("Tokens not found in the response data:", response.data);
-        alert("Login failed: Tokens not received.");
+        toast.error("Login failed: Tokens not received.");
       }
     } catch (error) {
       console.error(
         "Error during login:",
         JSON.stringify(error.response?.data || error.message, null, 2)
       );
-      alert(`Login failed! ${error.response?.data?.message || "Unknown error"}`);
+      toast.error(`Login failed! ${error.response?.data?.message || "Unknown error"}`);
     }
   };
 
@@ -84,13 +85,9 @@ const Login = () => {
               Log In
             </button>
           </form>
-          {/* <div className="mt-4 text-center">
-            <a href="/forgot-password" className="text-sm text-purple-600 hover:underline">
-              Forgot Password?
-            </a>
-          </div> */}
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 };

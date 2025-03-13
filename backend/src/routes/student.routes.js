@@ -8,6 +8,6 @@ const router = Router();
 
 
 //school admin
-router.post("/login",verifyJWT,studentLogin);
+router.post("/login",studentLogin);
 
 export default router

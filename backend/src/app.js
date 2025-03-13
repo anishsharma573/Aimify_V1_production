@@ -52,13 +52,16 @@ import schooladminRoutes from "./routes/schooladmin.routes.js"
 import QuestionRoutes from "./routes/question.routes.js"
 import studentRoutes from "./routes/student.routes.js"
 import teacherRoutes from "./routes/teacher.routes.js"
-
+import schoolRoutes from "./routes/school.routes.js"
+import ExamRoutes from "./routes/paper.routes.js"
 //routes 
 app.use("/api/v1/users",userRoutes)
 app.use("/api/v1/schooladmin",schooladminRoutes)
 app.use("/api/v1/questions",QuestionRoutes)
 app.use("/api/v1/student",studentRoutes)
 app.use("/api/v1/teacher",teacherRoutes)
+app.use("/api/v1/school",schoolRoutes)
+app.use("/api/v1/exam",ExamRoutes)
 
 
 export default app

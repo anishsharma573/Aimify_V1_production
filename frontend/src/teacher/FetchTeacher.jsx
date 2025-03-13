@@ -17,17 +17,19 @@ const TeachersList = () => {
     if (storedData) {
       try {
         const adminData = JSON.parse(storedData);
-        if (adminData?.data?.user?.schoolId) {
-          console.log("Extracted schoolId:", adminData.data.user.schoolId);
-          setSchoolId(adminData.data.user.schoolId);
+        console.log("Parsed admin data:", adminData);
+        if (adminData?.user?.schoolId) {
+          console.log("Extracted schoolId:", adminData.user.schoolId);
+          setSchoolId(adminData.user.schoolId);
         } else {
-          console.error("schoolId not found in adminData.data.user");
+          console.error("schoolId not found in adminData.user");
         }
       } catch (err) {
         console.error("Error parsing adminData:", err);
       }
     }
   }, []);
+  
 
   // Fetch teachers when schoolId and selectedClass are available.
   useEffect(() => {

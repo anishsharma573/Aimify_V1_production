@@ -20,19 +20,23 @@ const AddStudent = () => {
   // Retrieve schoolId from localStorage on mount.
   useEffect(() => {
     const storedData = localStorage.getItem("schoolAdminData");
+    console.log("Stored data from localStorage:", storedData);
     if (storedData) {
       try {
         const adminData = JSON.parse(storedData);
-        if (adminData?.data?.user?.schoolId) {
-          setSchoolId(adminData.data.user.schoolId);
+        console.log("Parsed admin data:", adminData);
+        if (adminData?.user?.schoolId) {
+          console.log("Extracted schoolId:", adminData.user.schoolId);
+          setSchoolId(adminData.user.schoolId);
         } else {
-          console.error("schoolId not found in adminData.data.user");
+          console.error("schoolId not found in adminData.user");
         }
-      } catch (error) {
-        console.error("Error parsing adminData:", error);
+      } catch (err) {
+        console.error("Error parsing adminData:", err);
       }
     }
   }, []);
+  
 
   const handleOptionChange = (mode) => {
     setOption(mode);

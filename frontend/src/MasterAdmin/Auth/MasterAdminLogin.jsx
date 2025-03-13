@@ -22,15 +22,20 @@ const Login = () => {
       const response = await axiosInstance.post("users/master-admin-login", data, {
         headers: { "Content-Type": "application/json" },
       });
-      const { accessToken, refreshToken } = response.data.data;
-
+      
+      const { accessToken, refreshToken, user } = response.data.data; // Destructure user here
+      
       console.log("Access Token:", accessToken);
       console.log("Refresh Token:", refreshToken);
-
-      if (accessToken && refreshToken) {
+      
+      if (accessToken && refreshToken && user) {
         localStorage.setItem("token", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("role", user.role); // Now using user from data
+      
         toast.success("Login successful!");
+      
+      
         navigate("/admin-dashboard");
       } else {
         console.error("Tokens not found in the response data:", response.data);

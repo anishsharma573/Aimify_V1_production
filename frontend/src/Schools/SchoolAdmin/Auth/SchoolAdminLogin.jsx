@@ -23,13 +23,19 @@ const handleSubmit = async (e) => {
     });
     console.log("Login response:", response.data); // Debug log
     toast.success(response.data.message || "Login successful");
-
+  
+    // Assuming the response structure nests the school admin data inside response.data.data
+    const schoolAdminData = response.data.data;
+    
     // Save the admin data (including schoolId) in localStorage
-    localStorage.setItem("schoolAdminData", JSON.stringify(response.data));
-
+    localStorage.setItem("schoolAdminData", JSON.stringify(schoolAdminData));
+    
+    // Also set role in localStorage. Adjust according to your API response.
+    localStorage.setItem("role", schoolAdminData.user.role);
+  
     // Navigate to the school admin dashboard
     navigate("/school-admin/dashboard");
-  } catch (err) {
+  }  catch (err) {
     toast.error(err.response?.data?.message || "Login failed");
   } finally {
     setLoading(false);

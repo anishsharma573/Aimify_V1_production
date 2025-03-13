@@ -5,11 +5,13 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   // Extract token from Authorization header or cookies
-  const token =
-    req.header("Authorization")?.replace("Bearer ", "") || req.cookies.accessToken;
+  const authHeader = req.header("Authorization");
+  const token = authHeader?.replace("Bearer ", "") || req.cookies.accessToken;
 
-  console.log("Authorization Header:", req.header("Authorization"));
+  // Debug logging to see what's being received
+  console.log("Authorization Header:", authHeader);
   console.log("Cookies:", req.cookies);
+  console.log("Token received for verification:", token);
 
   if (!token) {
     console.error("No token provided");
@@ -17,7 +19,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    // Ensure secret is defined
+    // Ensure the secret is defined
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) {
       throw new Error("ACCESS_TOKEN_SECRET is not defined in the environment variables");
@@ -27,40 +29,34 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     const decodedToken = jwt.verify(token, secret);
     console.log("Decoded Token:", decodedToken);
 
-    // Find user in the database
+    // Find the user in the database using the _id from the token
     const user = await User.findById(decodedToken._id);
     if (!user) {
       console.error("User not found for the given token");
       throw new ApiError(401, "Unauthorized: User not found");
     }
 
-    // Attach user to request object
+    // Attach the user data to the request object (excluding sensitive fields)
     req.user = {
       _id: user._id,
-
       username: user.username,
       name: user.name,
-      role:user.role,
+      role: user.role,
       schoolId: user.schoolId,
-    
-
-      
     };
     console.log("Attached User to Request:", req.user);
 
     next();
   } catch (error) {
     console.error("JWT Error:", error.message);
-
-    // Handle token-specific errors
+    // Handle specific token errors
     if (error.name === "TokenExpiredError") {
       throw new ApiError(401, "Token has expired. Please log in again.");
     }
     if (error.name === "JsonWebTokenError") {
       throw new ApiError(401, "Invalid token. Please log in again.");
     }
-
-    // Other errors
+    // Handle other errors
     throw new ApiError(401, "Unauthorized: " + (error.message || "Invalid token"));
   }
 });

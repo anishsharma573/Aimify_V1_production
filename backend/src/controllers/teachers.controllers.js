@@ -16,29 +16,41 @@ const generateAccessAndRefreshToken = async (userId) => {
   await user.save({ validateBeforeSave: false });
   return { accessToken, refreshToken };
 };
-
-const teacherLogin = asyncHandler(async (req, res) => {
-  let host = req.headers.host;
-  if (host.includes(":")) {
-    host = host.split(":")[0];
+const teacherLogin = asyncHandler(async (req, res, next) => {
+  // Check if the client provided a subdomain; otherwise, derive it from the host header.
+  const clientSubdomain = req.body.subdomain;
+  let hostSubdomain = req.headers.host;
+  if (hostSubdomain.includes(":")) {
+    hostSubdomain = hostSubdomain.split(":")[0];
   }
-  const subdomain = host.split(".")[0];
+  const subdomain = clientSubdomain || hostSubdomain.split(".")[0].toLowerCase();
+
+  console.log("Host:", req.headers.host);
+  console.log("Extracted subdomain:", subdomain);
+
+  // Lookup the school based on the subdomain.
   const school = await School.findOne({ subdomain });
+  console.log("Found school:", school);
+
   if (!school) {
     throw new ApiError(404, "School not found for the provided subdomain");
   }
+
   const { username, password } = req.body;
   if (!username || !password) {
     throw new ApiError(400, "Username and password are required");
   }
+  
   const teacher = await User.findOne({ username, schoolId: school._id, role: "teacher" });
   if (!teacher) {
     throw new ApiError(400, "Invalid credentials or user does not belong to this school");
   }
+  
   const isPasswordValid = await teacher.isPasswordCorrect(password);
   if (!isPasswordValid) {
     throw new ApiError(400, "Invalid password");
   }
+  
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(teacher._id);
   const loggedInUser = await User.findById(teacher._id).select("-password -refreshToken");
   const options = {
@@ -47,6 +59,7 @@ const teacherLogin = asyncHandler(async (req, res) => {
     sameSite: "Strict",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
+  
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -59,5 +72,6 @@ const teacherLogin = asyncHandler(async (req, res) => {
       )
     );
 });
+
 
 export { teacherLogin };

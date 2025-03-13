@@ -1,14 +1,15 @@
-// components/StudentLogin.jsx
+// components/TeacherLogin.jsx
 import React, { useState } from "react";
+import axiosInstance from "../../services/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../services/api";
 import useSchool from "../../Schools/GetSchoolBySubdomain";
+useSchool
 
-const StudentLogin = () => {
+const TeacherLogin = () => {
   const { school, loadingSchool } = useSchool();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loadingLogin, setLoadingLogin] = useState(false);
   const navigate = useNavigate();
 
@@ -19,43 +20,30 @@ const StudentLogin = () => {
     return parts.length > 1 ? parts[0] : "";
   };
 
-  const loginStudent = async (username, password) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoadingLogin(true);
     const subdomain = getSubdomain();
     try {
       const response = await axiosInstance.post(
-        "/student/login",
+        '/teacher/login',
         { username, password, subdomain },
-        {
-          withCredentials: true,
-          headers: { Authorization: "" },
-        }
+        { withCredentials: true } // ensures cookies (accessToken and refreshToken) are included
       );
-      console.log("Login successful", response.data);
-      const student = response.data.data.user;
-      localStorage.setItem("studentData", JSON.stringify(response.data.data));
-      localStorage.setItem("role", student.role);
-      toast.success(`Login successful on subdomain: ${subdomain}`);
       
-      if (student.role === "student") {
-        navigate("/student/dashboard");
-      } else if (student.role === "teacher") {
-        navigate("/teacher/dashboard");
-      }
-    } catch (error) {
-      console.error("Login error on subdomain", subdomain, error.response?.data);
-      toast.error(
-        error.response?.data?.message ||
-          `Login error on subdomain: ${subdomain}`
-      );
+      console.log('Login successful:', response.data);
+      const teacher = response.data.data.user;
+      localStorage.setItem("teacherdata", JSON.stringify(response.data.data));
+      localStorage.setItem("role", teacher.role);
+      toast.success("Teacher login successful!");
+      navigate("/teacher/dashboard");
+    } catch (err) {
+      console.error('Login error:', err);
+      const errMsg = err.response?.data?.message || 'An error occurred during login';
+      toast.error(errMsg);
     } finally {
       setLoadingLogin(false);
     }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    loginStudent(username, password);
   };
 
   // Show a loader or message while fetching school details.
@@ -82,37 +70,33 @@ const StudentLogin = () => {
         {school.description && <p className="text-blue-700">{school.description}</p>}
       </div>
       
-      {/* Student Login Form */}
+      {/* Teacher Login Form */}
       <div className="w-full">
-        <h2 className="text-2xl font-bold text-center mb-4 text-blue-800">Student Login</h2>
+        <h2 className="text-2xl font-bold text-center mb-4 text-blue-800">Teacher Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-gray-700">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
+            <label htmlFor="username" className="block text-gray-700">Username</label>
+            <input 
+              type="text" 
+              id="username" 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              required 
               className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
+            <label htmlFor="password" className="block text-gray-700">Password</label>
+            <input 
+              type="password" 
+              id="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required 
               className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
             />
           </div>
-          <button
+          <button 
             type="submit"
             disabled={loadingLogin}
             className="w-full bg-blue-600 text-white font-semibold p-2 rounded hover:bg-blue-700 transition-colors duration-300"
@@ -125,4 +109,4 @@ const StudentLogin = () => {
   );
 };
 
-export default StudentLogin;
+export default TeacherLogin;

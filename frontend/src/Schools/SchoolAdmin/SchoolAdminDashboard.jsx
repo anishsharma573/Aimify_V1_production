@@ -6,26 +6,27 @@ const SchoolAdminDashboard = () => {
   const [schoolId, setSchoolId] = useState("");
 
   useEffect(() => {
-    // Retrieve the stored admin data from localStorage
     const storedData = localStorage.getItem("schoolAdminData");
     console.log("Stored data from localStorage:", storedData);
     if (storedData) {
       try {
         const adminData = JSON.parse(storedData);
         console.log("Parsed admin data:", adminData);
-        // Extract schoolId from the user data
-        if (adminData?.data?.user?.schoolId) {
-          console.log("Extracted schoolId:", adminData.data.user.schoolId);
-          setSchoolId(adminData.data.user.schoolId);
+        const extractedSchoolId =
+          adminData?.school?._id || adminData?.school?.schoolId;
+        if (extractedSchoolId) {
+          console.log("Extracted schoolId:", extractedSchoolId);
+          setSchoolId(extractedSchoolId);
         } else {
-          console.error("schoolId not found in adminData.data.user");
+          console.error("schoolId not found in adminData.school");
         }
       } catch (err) {
         console.error("Error parsing adminData:", err);
       }
     }
   }, []);
-
+  
+  
   const handleFetchStudents = () => {
     console.log("Navigating with schoolId:", schoolId);
     if (!schoolId) {

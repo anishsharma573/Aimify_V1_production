@@ -209,7 +209,7 @@ const addStudent = asyncHandler(async (req, res, next) => {
       role: "student",
       schoolId: schoolId,
       dateOfBirth: dateObj, 
-      class: student.class,
+      className: student.className,
     });
   }
 
@@ -354,7 +354,7 @@ const addTeacher = asyncHandler(async (req, res, next) => {
       role: "teacher",
       schoolId: schoolId,
       dateOfBirth: dateObj,
-      class: teacher.class, // Optional: use if applicable.
+      className: teacher.className, // Optional: use if applicable.
     });
   }
 

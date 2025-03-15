@@ -16,7 +16,7 @@ const UserSchema = new mongoose.Schema({
 
     phone: { type: String, required: false },
     location: { type: String, required: false },
-    class: { type: String, required: false },
+    className: { type: String, required: false },
 
     profile: {
         dob: { type: Date },

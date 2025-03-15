@@ -1,20 +1,31 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-
-import Paper from "../models/createExam.models.js";
+// controllers/paper.controllers.js
+import Paper from "../models/createExam.models.js"
 import { ApiError } from "../utils/ApiError.js";
-
-/**
- * assignPaper - Controller to create (assign) a new exam paper.
- * Expects the following fields in the request body:
- * - subject, examName, topic, subTopic, totalMarks
- * - school (ID of the school conducting the exam)
- * - createdBy (ID of the user/teacher assigning the paper)
- */
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.models.js";
 export const assignPaper = asyncHandler(async (req, res) => {
-  const { subject, examName, topic, subTopic, totalMarks, school, createdBy } = req.body;
+  const {
+    subject,
+    examName,
+    topic,
+    subTopic,
+    totalMarks,
+    school,
+    createdBy,
+    className, // <-- storing class as a string
+  } = req.body;
 
   // Validate required fields
-  if (!subject || !examName || !topic || !subTopic || !totalMarks || !school || !createdBy) {
+  if (
+    !subject ||
+    !examName ||
+    !topic ||
+    !subTopic ||
+    !totalMarks ||
+    !school ||
+    !createdBy ||
+    !className
+  ) {
     throw new ApiError(400, "Missing required fields");
   }
 
@@ -27,6 +38,7 @@ export const assignPaper = asyncHandler(async (req, res) => {
     totalMarks,
     school,
     createdBy,
+    className,
   });
 
   res.status(201).json({
@@ -36,50 +48,75 @@ export const assignPaper = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * getPapers - Controller to retrieve exam papers.
- * Optionally filters by school or creator (teacher) using query parameters.
- * Query params: school (schoolId), createdBy (userId)
- */
-export const getPapers = asyncHandler(async (req, res) => {
-  const filter = {};
 
-  if (req.query.school) {
-    filter.school = req.query.school;
-  }
-  if (req.query.createdBy) {
-    filter.createdBy = req.query.createdBy;
-  }
-
-  const papers = await Paper.find(filter)
-    .populate("school", "name subdomain")
-    .populate("createdBy", "username role")
-    .populate("results.student", "username name");
-
+// controllers/paper.controllers.js (add this export)
+export const getExamsByClass = asyncHandler(async (req, res) => {
+  const { className } = req.params;
+ 
+  const exams = await Paper.find({ className });
   res.status(200).json({
     status: 200,
-    message: "Papers fetched successfully",
-    data: papers,
+    message: "Exams fetched successfully",
+    data: exams,
   });
 });
 
-/**
- * updatePaper - Controller to update an existing exam paper.
- * It can update exam details and/or add/update student results.
- * Expects the paper ID in req.params.id and update data in req.body.
- */
-export const updatePaper = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body;
 
-  const paper = await Paper.findByIdAndUpdate(id, updateData, { new: true });
+// controllers/user.controllers.js
+
+
+export const getStudentsByClass = asyncHandler(async (req, res) => {
+  const { className } = req.params;
+  // Fetch users with role 'student' and matching className
+  const students = await User.find({ className, role: "student" });
+  res.status(200).json({
+    status: 200,
+    message: "Students fetched successfully",
+    data: students,
+  });
+});
+
+
+// controllers/paper.controllers.js (add this export)
+export const updateExamMarks = asyncHandler(async (req, res) => {
+  const { paperId } = req.params;
+  const { results } = req.body;
+
+  // Validate that results is provided as an array.
+  if (!results || !Array.isArray(results)) {
+    throw new ApiError(400, "Results must be provided as an array");
+  }
+
+  // Find the paper by its ID.
+  const paper = await Paper.findById(paperId);
   if (!paper) {
     throw new ApiError(404, "Paper not found");
   }
 
+  // Loop through each new result and update or add the marks.
+  results.forEach((newResult) => {
+    // Look for an existing result for this student.
+    const index = paper.results.findIndex(
+      (r) => r.student.toString() === newResult.student
+    );
+
+    if (index > -1) {
+      // Update marks if record exists.
+      paper.results[index].marksObtained = newResult.marksObtained;
+    } else {
+      // Otherwise, add a new result.
+      paper.results.push(newResult);
+    }
+  });
+
+  // Save the updated paper document.
+  await paper.save();
+
   res.status(200).json({
     status: 200,
-    message: "Paper updated successfully",
+    message: "Exam marks updated successfully",
     data: paper,
   });
 });
+
+

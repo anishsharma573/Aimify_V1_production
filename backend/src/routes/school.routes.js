@@ -1,7 +1,7 @@
 import Router from "express";
 import isMasterAdmin from "../middleware/masterAdmin.middleware.js";
 import { verifyJWT } from "../middleware/auth.middlwares.js";
-import { getSchoolBySubdomain } from "../controllers/School.controllers.js";
+import { getSchoolBySubdomain } from "../controllers/school.controllers.js"
 
 
 

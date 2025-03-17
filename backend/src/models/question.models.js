@@ -6,9 +6,10 @@ const questionSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    class:{
+    className:{
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     questionType: {
         type: String,
@@ -34,7 +35,7 @@ const questionSchema = new mongoose.Schema({
     },
     difficulty: {
         type: String,
-        enum: ['EASY', 'Medium', 'Hard'],
+        enum: ['Easy', 'Medium', 'Hard'],
         default: 'EASY'
     },
     subject: {
@@ -61,6 +62,10 @@ const questionSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    bloomsTaxonomy:{
+        type: String,
+
+    },
     matchingPairs: {
         type: [{
             question: String,
@@ -85,6 +90,7 @@ const questionSchema = new mongoose.Schema({
         },
         functionSignature: {
             type: String,
+
             required: function () {
                 return this.questionType === 'CODING';
             }
@@ -105,7 +111,7 @@ const questionSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId, // User who created the question
         ref: 'User',
-        required: true
+        required: false
     },
     isVerified: {
         type: Boolean, // True if question is verified

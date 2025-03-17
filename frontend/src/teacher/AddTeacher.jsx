@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../services/api";
+import "react-toastify/dist/ReactToastify.css";
 
 const AddTeacher = () => {
-  const [option, setOption] = useState("file"); // Options: "file", "json", "manual"
+  // Options: "file", "json", "manual"
+  const [option, setOption] = useState("file");
   const [file, setFile] = useState(null);
   const [jsonInput, setJsonInput] = useState("");
   const [manualForm, setManualForm] = useState({
     name: "",
     phone: "",
     dateOfBirth: "",
-    class: "",
+    className: "",
     username: ""
   });
   const [schoolId, setSchoolId] = useState("");
@@ -19,23 +21,18 @@ const AddTeacher = () => {
 
   // On mount, retrieve schoolId from localStorage.
   useEffect(() => {
-     const storedData = localStorage.getItem("schoolAdminData");
-     console.log("Stored data from localStorage:", storedData);
-     if (storedData) {
-       try {
-         const adminData = JSON.parse(storedData);
-         console.log("Parsed admin data:", adminData);
-         if (adminData?.user?.schoolId) {
-           console.log("Extracted schoolId:", adminData.user.schoolId);
-           setSchoolId(adminData.user.schoolId);
-         } else {
-           console.error("schoolId not found in adminData.user");
-         }
-       } catch (err) {
-         console.error("Error parsing adminData:", err);
-       }
-     }
-   }, []);
+    const storedData = localStorage.getItem("schoolAdminData");
+    if (storedData) {
+      try {
+        const adminData = JSON.parse(storedData);
+        if (adminData?.user?.schoolId) {
+          setSchoolId(adminData.user.schoolId);
+        }
+      } catch (error) {
+        console.error("Error parsing schoolAdminData", error);
+      }
+    }
+  }, []);
 
   const handleOptionChange = (mode) => {
     setOption(mode);
@@ -47,9 +44,7 @@ const AddTeacher = () => {
       toast.error("School ID not available");
       return;
     }
-
     const formData = new FormData();
-    // Set the duplicate flag; defaults to false.
     formData.append("skipDuplicates", false);
 
     if (option === "file") {
@@ -64,8 +59,8 @@ const AddTeacher = () => {
         return;
       }
       try {
-        // Validate JSON and then append as a text field.
         const parsed = JSON.parse(jsonInput);
+        // Ensure the JSON uses "className" instead of "class"
         formData.append("teachers", JSON.stringify(parsed));
       } catch (error) {
         toast.error("Invalid JSON data");
@@ -80,10 +75,9 @@ const AddTeacher = () => {
         name: manualForm.name,
         phone: manualForm.phone,
         dateOfBirth: manualForm.dateOfBirth,
-        class: manualForm.class,
+        className: manualForm.className, // Using className consistently
         ...(manualForm.username && { username: manualForm.username })
       };
-      // Wrap in an array and append as a JSON string.
       formData.append("teachers", JSON.stringify([teacher]));
     }
 
@@ -97,19 +91,24 @@ const AddTeacher = () => {
       navigate("/school-admin/dashboard");
     } catch (error) {
       console.error("Error adding teacher(s):", error);
-      toast.error(error.response?.data?.message || "Error adding teacher(s)");
+      toast.error(
+        error.response?.data?.message || "Error adding teacher(s)"
+      );
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex flex-col items-center justify-center p-4">
+      <ToastContainer />
       <h2 className="text-3xl font-bold text-gray-800 mb-6">Add Teacher(s)</h2>
       <div className="mb-4 flex">
         <button
           type="button"
           onClick={() => handleOptionChange("file")}
           className={`px-4 py-2 rounded-l ${
-            option === "file" ? "bg-purple-600 text-white" : "bg-gray-300 text-gray-700"
+            option === "file"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-300 text-gray-700"
           }`}
         >
           File Upload
@@ -118,7 +117,9 @@ const AddTeacher = () => {
           type="button"
           onClick={() => handleOptionChange("json")}
           className={`px-4 py-2 ${
-            option === "json" ? "bg-purple-600 text-white" : "bg-gray-300 text-gray-700"
+            option === "json"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-300 text-gray-700"
           }`}
         >
           JSON Input
@@ -127,7 +128,9 @@ const AddTeacher = () => {
           type="button"
           onClick={() => handleOptionChange("manual")}
           className={`px-4 py-2 rounded-r ${
-            option === "manual" ? "bg-purple-600 text-white" : "bg-gray-300 text-gray-700"
+            option === "manual"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-300 text-gray-700"
           }`}
         >
           Manual Entry
@@ -159,7 +162,7 @@ const AddTeacher = () => {
               onChange={(e) => setJsonInput(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
               rows="6"
-              placeholder='[{"name": "Jane Doe", "phone": "9876543210", "dateOfBirth": "01-01-1980", "class": "10"}]'
+              placeholder='[{"name": "Jane Doe", "phone": "9876543210", "dateOfBirth": "01-01-1980", "className": "10"}]'
             />
           </div>
         )}
@@ -206,26 +209,33 @@ const AddTeacher = () => {
               />
             </div>
             <div>
-              <label htmlFor="class" className="block text-gray-700 font-semibold mb-1">
+              <label htmlFor="className" className="block text-gray-700 font-semibold mb-1">
                 Class (if applicable):
               </label>
               <input
                 type="text"
-                id="class"
-                value={manualForm.class}
-                onChange={(e) => setManualForm({ ...manualForm, class: e.target.value })}
+                id="className"
+                value={manualForm.className}
+                onChange={(e) => setManualForm({ ...manualForm, className: e.target.value })}
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
                 placeholder="e.g., 10"
               />
             </div>
-            {/* Optional: username field */}
-           
+            <div>
+              <label htmlFor="username" className="block text-gray-700 font-semibold mb-1">
+                Username (optional):
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={manualForm.username}
+                onChange={(e) => setManualForm({ ...manualForm, username: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
           </div>
         )}
-        <button
-          type="submit"
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-semibold transition-colors duration-300 mt-4"
-        >
+        <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-semibold transition-colors duration-300 mt-4">
           Submit
         </button>
       </form>

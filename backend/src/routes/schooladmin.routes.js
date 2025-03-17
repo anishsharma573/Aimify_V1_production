@@ -12,9 +12,9 @@ const  router = Router();
 // router.use(isSchoolAdmin);
 // router.post("/schools/:schoolId/add-users", upload.single("file"), addStudent);
 router.post('/login', schoolAdminLogin);
-router.post('/schools/:schoolId/add-student',verifyJWT,isSchoolAdmin, addStudent);
-router.post('/schools/:schoolId/add-teacher',verifyJWT,isSchoolAdmin, addTeacher);
+router.post('/schools/:schoolId/add-student',verifyJWT,isSchoolAdmin, upload.single("file"),addStudent);
+router.post('/schools/:schoolId/add-teacher',verifyJWT,isSchoolAdmin,  upload.single("file"),addTeacher);
 router.get('/schools/:schoolId/students',verifyJWT,isSchoolAdmin, showStudents);
-router.get('/schools/:schoolId/teacher',verifyJWT,isSchoolAdmin, upload.single("file"), showTeacher);
+router.get('/schools/:schoolId/teacher',verifyJWT,isSchoolAdmin,  showTeacher);
 
 export default router

@@ -1,4 +1,3 @@
-// models/Paper.js
 import mongoose from "mongoose";
 
 const paperSchema = new mongoose.Schema(
@@ -37,8 +36,8 @@ const paperSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Creator (User) is required"],
     },
-    // Store the class name as a simple string
-    class: {
+    // Store the class name as a simple string (renamed to "className")
+    className: {
       type: String,
       required: [true, "Class name is required"],
       trim: true,
@@ -47,15 +46,22 @@ const paperSchema = new mongoose.Schema(
       {
         student: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: "user",
           required: true,
         },
         marksObtained: {
           type: Number,
-          required: true,
+          default: null,
         },
+        remarks: { type: String, default: "" },
       },
     ],
+    questions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Question"
+      }
+    ]
   },
   {
     timestamps: true,

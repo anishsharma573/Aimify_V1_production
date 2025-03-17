@@ -1,16 +1,19 @@
 import Router from "express";
 import isMasterAdmin from "../middleware/masterAdmin.middleware.js";
 import { verifyJWT } from "../middleware/auth.middlwares.js";
-import { addQuestion, chooseQuestions } from "../controllers/question.controllers.js";
-
+import { getQuestionsByClassAndSubject, addSingleQuestion , addQuestionFromExcel , addQuestionFromJson } from "../controllers/question.controllers.js";
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
 
 
 const router = Router();
 
 router.use(verifyJWT);
+router.get("/getQuestions", getQuestionsByClassAndSubject);
 router.use(isMasterAdmin);
-router.post("/add-question", addQuestion);
-router.post("/choose-question", chooseQuestions);
+router.post("/add-single-question", addSingleQuestion);
+router.post("/add-json-file-question", addQuestionFromJson);
+router.post("/add-excel-question",  upload.single('file'),addQuestionFromExcel);
 
 
 

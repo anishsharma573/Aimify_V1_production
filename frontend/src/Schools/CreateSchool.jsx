@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { toast } from "react-toastify";
 import axiosInstance from "../services/api";
 
@@ -10,16 +9,22 @@ const CreateSchool = () => {
     name: "",
     subdomain: "",
     address: "",
-    logo: "",
     principalName: "",
     phoneNumber: "",
   });
+  const [logoFile, setLogoFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Handle text input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle file input change
+  const handleFileChange = (e) => {
+    setLogoFile(e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
@@ -28,8 +33,22 @@ const CreateSchool = () => {
     setMessage("");
 
     try {
-      const response = await axiosInstance.post("/users/create-school", formData, {
-        headers: { "Content-Type": "application/json" },
+      // Create a FormData instance and append all form fields
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("subdomain", formData.subdomain);
+      data.append("address", formData.address);
+      data.append("principalName", formData.principalName);
+      data.append("phoneNumber", formData.phoneNumber);
+      
+      // Append the file if available
+      if (logoFile) {
+        data.append("logo", logoFile);
+      }
+
+      // Send a POST request with multipart/form-data.
+      const response = await axiosInstance.post("/users/create-school", data, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       const { message: resMessage } = response.data.data || {};
       setMessage(resMessage || "School created successfully");
@@ -38,7 +57,9 @@ const CreateSchool = () => {
     } catch (error) {
       console.error("Error creating school:", error);
       setMessage("Error creating school");
-      toast.error(`Error creating school: ${error.response?.data?.message || error.message}`);
+      toast.error(
+        `Error creating school: ${error.response?.data?.message || error.message}`
+      );
     } finally {
       setLoading(false);
     }
@@ -58,7 +79,7 @@ const CreateSchool = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 School Name
@@ -104,16 +125,16 @@ const CreateSchool = () => {
             </div>
             <div>
               <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-1">
-                Logo URL
+                Upload Logo
               </label>
               <input
-                type="text"
+                type="file"
                 name="logo"
                 id="logo"
-                value={formData.logo}
-                onChange={handleChange}
+                onChange={handleFileChange}
+                accept="image/*"
                 required
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
             </div>
             <div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axiosInstance from "../services/api";
 
 const StudentsList = () => {
@@ -40,10 +40,11 @@ const StudentsList = () => {
           // If a specific class is selected (numeric or "Other"), append query parameter.
           // If "All Classes" is selected, fetch all students.
           if (selectedClass !== "All Classes") {
-            url += `?class=${selectedClass}`;
+            url += `?className=${selectedClass}`;
           }
           const response = await axiosInstance.get(url);
           console.log("Fetched students:", response.data);
+          // Set students from the backend; ensure the key matches what your backend sends.
           setStudents(response.data.data.students);
         } catch (err) {
           console.error("Error fetching students:", err);
@@ -59,22 +60,22 @@ const StudentsList = () => {
     }
   }, [schoolId, selectedClass]);
 
-  // Client-side filtering based on selectedClass and search query for username
+  // Client-side filtering based on selectedClass and search query for username.
   const filteredStudents = students.filter((student) => {
     let matchesClass = true;
     if (selectedClass && selectedClass !== "All Classes") {
       if (selectedClass === "Other") {
-        const studentClassNum = Number(student.class);
+        const studentClassNum = Number(student.className);
         matchesClass =
           isNaN(studentClassNum) ||
-          student.class === undefined ||
+          student.className === undefined ||
           studentClassNum < 1 ||
           studentClassNum > 12;
       } else {
         // For a numeric class, match exactly.
         matchesClass =
-          student.class !== undefined &&
-          Number(student.class) === Number(selectedClass);
+          student.className !== undefined &&
+          Number(student.className) === Number(selectedClass);
       }
     }
     const matchesSearch = student.username
@@ -83,16 +84,24 @@ const StudentsList = () => {
     return matchesClass && matchesSearch;
   });
 
-  // Helper function to format DOB as DD/MM/YYYY
+  // Helper function to format DOB as DD/MM/YYYY.
   const formatDOB = (dob) => {
     if (!dob) return "N/A";
     const date = new Date(dob);
-    return date.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString();
+    return `${day}-${month}-${year}`;
   };
+  
+
+  if (loading) {
+    return <div className="p-4 text-center">Loading students...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-center text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="p-4">
@@ -165,12 +174,8 @@ const StudentsList = () => {
                 className="hover:bg-blue-50 cursor-pointer"
                 onClick={() => setSelectedStudent(student)}
               >
-                <td className="px-4 py-2 text-sm text-gray-900">
-                  {index + 1}
-                </td>
-                <td className="px-4 py-2 text-sm text-gray-900">
-                  {student.name}
-                </td>
+                <td className="px-4 py-2 text-sm text-gray-900">{index + 1}</td>
+                <td className="px-4 py-2 text-sm text-gray-900">{student.name}</td>
                 <td className="px-4 py-2 text-sm text-gray-900">
                   {student.username || "N/A"}
                 </td>
@@ -181,7 +186,7 @@ const StudentsList = () => {
                   {formatDOB(student.dateOfBirth)}
                 </td>
                 <td className="px-4 py-2 text-sm text-gray-900">
-                  {student.class || "N/A"}
+                  {student.className || "N/A"}
                 </td>
               </tr>
             ))}
@@ -202,12 +207,11 @@ const StudentsList = () => {
           <p>
             <strong>Phone:</strong> {selectedStudent.phone || "N/A"}
           </p>
-         
           <p>
             <strong>Date of Birth:</strong> {formatDOB(selectedStudent.dateOfBirth)}
           </p>
           <p>
-            <strong>Class:</strong> {selectedStudent.class || "N/A"}
+            <strong>Class:</strong> {selectedStudent.className || "N/A"}
           </p>
           <button
             className="mt-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition"

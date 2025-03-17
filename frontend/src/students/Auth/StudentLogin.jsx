@@ -26,22 +26,25 @@ const StudentLogin = () => {
       const response = await axiosInstance.post(
         "/student/login",
         { username, password, subdomain },
-        {
-          withCredentials: true,
-          headers: { Authorization: "" },
-        }
+        { withCredentials: true }
       );
       console.log("Login successful", response.data);
       const student = response.data.data.user;
+  
+      // Store the returned tokens in localStorage if they exist
+      if (response.data.data.accessToken) {
+        localStorage.setItem("token", response.data.data.accessToken);
+      }
+      if (response.data.data.refreshToken) {
+        localStorage.setItem("refreshToken", response.data.data.refreshToken);
+      }
+  
+      // Also store student data and role for future use
       localStorage.setItem("studentData", JSON.stringify(response.data.data));
       localStorage.setItem("role", student.role);
+  
       toast.success(`Login successful on subdomain: ${subdomain}`);
-      
-      if (student.role === "student") {
-        navigate("/student/dashboard");
-      } else if (student.role === "teacher") {
-        navigate("/teacher/dashboard");
-      }
+      navigate("/student/dashboard");
     } catch (error) {
       console.error("Login error on subdomain", subdomain, error.response?.data);
       toast.error(
@@ -52,7 +55,7 @@ const StudentLogin = () => {
       setLoadingLogin(false);
     }
   };
-
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     loginStudent(username, password);

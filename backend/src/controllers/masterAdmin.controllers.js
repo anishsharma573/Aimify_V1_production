@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { School } from "../models/school.models.js";
-
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import bcrypt from "bcryptjs";
 
 
@@ -105,27 +105,42 @@ const masterAdminLogin = asyncHandler(async (req, res) => {
 
 
 const createSchool = asyncHandler(async (req, res, next) => {
-    const {name,address,logo,principalName,phoneNumber,subdomain} = req.body;
+    const { name, address, principalName, phoneNumber, subdomain } = req.body;
+    
+    // Check if an image file is uploaded via Multer
+    let logoUrl = req.body.logo; // fallback, if provided directly
+    if (req.file) {
+      const result = await uploadOnCloudinary(req.file.path);
+      if (!result) {
+        throw new ApiError(500, "Error uploading logo to Cloudinary");
+      }
+      logoUrl = result.secure_url;
+    }
+  
+    // Create the school document with the Cloudinary logo URL.
     const school = await School.create({
-        name,
-        address,
-        logo,
-        principalName,
-        phoneNumber,
-        subdomain,
-        createdBy: {
-                _id: req.user._id,
-                username: req.user.username,
-               
-                role: req.user.role,
-        },
-          });
-          await school.save();
-          
-    return res.status(200).json(new ApiResponse(200,{
-        message:"School created successfully",
-        data:school}));
-})
+      name,
+      address,
+      logo: logoUrl,
+      principalName,
+      phoneNumber,
+      subdomain,
+      createdBy: {
+        _id: req.user._id,
+        username: req.user.username,
+        role: req.user.role,
+      },
+    });
+  
+    await school.save();
+  
+    return res.status(200).json(
+      new ApiResponse(200, {
+        message: "School created successfully",
+        data: school,
+      })
+    );
+  });
 
 const createSchoolAdmin = asyncHandler(async (req, res, next) => {
     const { schoolId } = req.params;

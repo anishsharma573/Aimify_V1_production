@@ -1,67 +1,49 @@
 import express from 'express';
-import cors from "cors"
-import cookieParser from "cookie-parser"
-import bodyParser from "body-parser"
-import multer from "multer"
-const app = express()
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import bodyParser from "body-parser";
 
+const app = express();
 
-
-
-
-// ----middleware---->>>
-
-// cors who can talk to the database
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      // Check if the origin contains "localhost:5173"
-      if (origin.includes("localhost:5173")) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"), false);
-      }
-    },
-    credentials: true, // Allow cookies to be sent
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
+// ---- CORS Setup ----
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (origin.includes("localhost:5173")) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"), false);
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.options("*", cors());
-  
-  app.options("*", cors());
-// --- express middleware --->>
 
-app.use(express.json());
-const upload = multer({ dest: "uploads/" });
-app.use(upload.single("file"));
-app.use(express.json({limit:"16kb"})) // allow all the json data to come in..
-app.use(express.urlencoded({extended:true,limit:"16kb"}))
-app.use(express.static("public"))
-
+// ---- Express Middlewares ----
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(bodyParser.json());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use(express.static("public"));
 
-// import routes
-import userRoutes from "./routes/user.routes.js"
-import schooladminRoutes from "./routes/schooladmin.routes.js"
-import QuestionRoutes from "./routes/question.routes.js"
-import studentRoutes from "./routes/student.routes.js"
-import teacherRoutes from "./routes/teacher.routes.js"
-import schoolRoutes from "./routes/school.routes.js"
-import ExamRoutes from "./routes/paper.routes.js"
-//routes 
-app.use("/api/v1/users",userRoutes)
-app.use("/api/v1/schooladmin",schooladminRoutes)
-app.use("/api/v1/questions",QuestionRoutes)
-app.use("/api/v1/student",studentRoutes)
-app.use("/api/v1/teacher",teacherRoutes)
-app.use("/api/v1/school",schoolRoutes)
-app.use("/api/v1/exam",ExamRoutes)
+// ---- Import Routes ----
+import userRoutes from "./routes/user.routes.js";
+import schooladminRoutes from "./routes/schooladmin.routes.js";
+import QuestionRoutes from "./routes/question.routes.js";
+import studentRoutes from "./routes/student.routes.js";
+import teacherRoutes from "./routes/teacher.routes.js";
+import schoolRoutes from "./routes/school.routes.js";
+import ExamRoutes from "./routes/paper.routes.js";
 
+// ---- Use Routes ----
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/schooladmin", schooladminRoutes);
+app.use("/api/v1/questions", QuestionRoutes);
+app.use("/api/v1/student", studentRoutes);
+app.use("/api/v1/teacher", teacherRoutes);
+app.use("/api/v1/school", schoolRoutes);
+app.use("/api/v1/exam", ExamRoutes);
 
-export default app
+export default app;

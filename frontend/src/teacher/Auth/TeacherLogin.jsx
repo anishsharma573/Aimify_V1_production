@@ -4,7 +4,7 @@ import axiosInstance from "../../services/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import useSchool from "../../Schools/GetSchoolBySubdomain";
-useSchool
+
 
 const TeacherLogin = () => {
   const { school, loadingSchool } = useSchool();
@@ -28,11 +28,14 @@ const TeacherLogin = () => {
       const response = await axiosInstance.post(
         '/teacher/login',
         { username, password, subdomain },
-        { withCredentials: true } // ensures cookies (accessToken and refreshToken) are included
+        { withCredentials: true }
       );
       
       console.log('Login successful:', response.data);
       const teacher = response.data.data.user;
+      // Save the tokens in localStorage for subsequent requests
+      localStorage.setItem("token", response.data.data.accessToken);
+      localStorage.setItem("refreshToken", response.data.data.refreshToken);
       localStorage.setItem("teacherdata", JSON.stringify(response.data.data));
       localStorage.setItem("role", teacher.role);
       toast.success("Teacher login successful!");
@@ -45,6 +48,7 @@ const TeacherLogin = () => {
       setLoadingLogin(false);
     }
   };
+  
 
   // Show a loader or message while fetching school details.
   if (loadingSchool) {

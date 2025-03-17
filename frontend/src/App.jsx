@@ -26,6 +26,9 @@ import StudentDashboard from "./students/StudentDashboard";
 import TeacherDashboard from "./teacher/TeacherDashboard";
 import LoginSelection from "./CombinLogin/Login";
 import TeacherLogin from "./teacher/Auth/TeacherLogin";
+import AssignPaperForm from "./Exam/AssignPaperForm";
+import UpdateMarksForm from "./Exam/UpdateMarksForm";
+import SetPaper from "./Exam/SetPaper";
 
 // For demonstration, we assume the user role is stored in localStorage.
 // In a real application, you might use Context, Redux, or another state management method.
@@ -52,14 +55,19 @@ const MainLayout = () => {
         <Route path="/login" element={<LoginSelection />} />
 
         {/* Protected Routes for Student */}
-        <Route element={<ProtectedRoute allowedRoles={["student"]} userRole={userRole} />}>
+      
           <Route path="/student/dashboard" element={<StudentDashboard />} />
-        </Route>
+  
          {/* Protected Routes for teacher */}
-        <Route element={<ProtectedRoute allowedRoles={["teacher"]} userRole={userRole} />}>
+       
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-        </Route>
+          
+     
+  {/* Assign Exam*/}
 
+  <Route path="/teacher/assign-paper" element={<AssignPaperForm />} />
+  <Route path="/teacher/update-marks" element={<UpdateMarksForm />} />
+  <Route path="/teacher/set-paper" element={<SetPaper />} />
         {/* Unauthorized route */}
         <Route path="/unauthorized" element={<Unauthorized />} />
 

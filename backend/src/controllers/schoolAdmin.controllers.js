@@ -53,7 +53,6 @@ const parseDateFromDDMMYY = (dateStr) => {
   return new Date(year, month - 1, day);
 };
 
-
 // School Admin Login Controller
 const schoolAdminLogin = asyncHandler(async (req, res, next) => {
   const { username, password } = req.body;
@@ -92,18 +91,20 @@ const schoolAdminLogin = asyncHandler(async (req, res, next) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-      new ApiResponse(200, {
-        user: loggedInUser,
-        school: schoolData,
-        accessToken,
-        refreshToken,
-      }, "Login successful. School data retrieved.")
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          school: schoolData,
+          accessToken,
+          refreshToken,
+        },
+        "Login successful. School data retrieved."
+      )
     );
 });
 
-
-
-
+// Add Student Controller
 const addStudent = asyncHandler(async (req, res, next) => {
   const { schoolId } = req.params;
 
@@ -159,6 +160,7 @@ const addStudent = asyncHandler(async (req, res, next) => {
   // Retrieve flag to skip duplicates if needed (defaults to false)
   const skipDuplicates = req.body.skipDuplicates || false;
   let newStudentsData = [];
+  console.log("student daTA", studentsData);
 
   // Process each student record
   for (const student of studentsData) {
@@ -208,8 +210,9 @@ const addStudent = asyncHandler(async (req, res, next) => {
       password: hashedPassword,
       role: "student",
       schoolId: schoolId,
-      dateOfBirth: dateObj, 
-      className: student.className,
+      dateOfBirth: dateObj,
+      // Use "className" if available; otherwise, try "class" from the input.
+      className: student.className || student.class,
     });
   }
 
@@ -249,7 +252,7 @@ const addStudent = asyncHandler(async (req, res, next) => {
     .json(new ApiResponse(201, { createdStudents, skippedDuplicates }, "Students added successfully."));
 });
 
-
+// Add Teacher Controller
 const addTeacher = asyncHandler(async (req, res, next) => {
   const { schoolId } = req.params;
 
@@ -304,6 +307,7 @@ const addTeacher = asyncHandler(async (req, res, next) => {
   // Retrieve flag to skip duplicates if needed (defaults to false).
   const skipDuplicates = req.body.skipDuplicates || false;
   let newTeachersData = [];
+  console.log("req", teachersData);
 
   // Process each teacher record.
   for (const teacher of teachersData) {
@@ -348,13 +352,14 @@ const addTeacher = asyncHandler(async (req, res, next) => {
 
     newTeachersData.push({
       username, // Auto-generated if not provided.
-      phone: teacher.phone,
       name: teacher.name,
+      phone: teacher.phone,
       password: hashedPassword,
       role: "teacher",
       schoolId: schoolId,
       dateOfBirth: dateObj,
-      className: teacher.className, // Optional: use if applicable.
+      // Use "className" if available; otherwise, use teacher.class if provided.
+      className: teacher.className || teacher.class,
     });
   }
 
@@ -394,29 +399,51 @@ const addTeacher = asyncHandler(async (req, res, next) => {
     .json(new ApiResponse(201, { createdTeachers, skippedDuplicates }, "Teachers added successfully."));
 });
 
-
-
-
-
-
 const showStudents = asyncHandler(async (req, res) => {
   const { schoolId } = req.params;
-  console.log("Received schoolId:", schoolId);
-  const students = await User.find({ schoolId: schoolId, role: "student" });
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { students }, "Students retrieved successfully"));
+  if (!schoolId) {
+    throw new ApiError(400, "School ID is required");
+  }
+
+  // Extract query parameters for pagination and filtering
+  const { page = 1, limit = 20, search = "", className: classFilter } = req.query;
+
+  // Build filter object using "className" instead of "class"
+  const filter = { schoolId, role: "student" };
+  if (classFilter) {
+    filter.className = classFilter;
+  }
+  if (search) {
+    filter.$or = [
+      { username: { $regex: search, $options: "i" } },
+      { name: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  // Count total matching documents
+  const total = await User.countDocuments(filter);
+
+  // Find students with pagination, lean query, and only required fields
+  const students = await User.find(filter)
+    .select("name username phone dateOfBirth className")
+    .lean()
+    .skip((Number(page) - 1) * Number(limit))
+    .limit(Number(limit));
+
+  return res.status(200).json({
+    status: 200,
+    message: "Students retrieved successfully",
+    data: { students, total, page: Number(page), limit: Number(limit) }
+  });
 });
-
-
 
 const showTeacher = asyncHandler(async (req, res) => {
   const { schoolId } = req.params;
   console.log("Received schoolId:", schoolId);
-  const students = await User.find({ schoolId: schoolId, role: "teacher" });
+  const teachers = await User.find({ schoolId: schoolId, role: "teacher" });
   return res
     .status(200)
-    .json(new ApiResponse(200, { students }, "Students retrieved successfully"));
+    .json(new ApiResponse(200, { teachers }, "Teachers retrieved successfully"));
 });
 
-export { addStudent, schoolAdminLogin, addTeacher ,showStudents ,showTeacher};
+export { addStudent, schoolAdminLogin, addTeacher, showStudents, showTeacher };

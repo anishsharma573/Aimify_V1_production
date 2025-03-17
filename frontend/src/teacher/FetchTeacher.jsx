@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axiosInstance from "../services/api";
 
 const TeachersList = () => {
@@ -30,7 +30,6 @@ const TeachersList = () => {
     }
   }, []);
   
-
   // Fetch teachers when schoolId and selectedClass are available.
   useEffect(() => {
     if (schoolId && selectedClass) {
@@ -40,12 +39,12 @@ const TeachersList = () => {
           let url = `/schooladmin/schools/${schoolId}/teacher`;
           // If a specific class is selected (other than "All Classes"), append query parameter.
           if (selectedClass !== "All Classes") {
-            url += `?class=${selectedClass}`;
+            url += `?className=${selectedClass}`;
           }
           const response = await axiosInstance.get(url);
           console.log("Fetched teachers:", response.data);
-          // NOTE: The backend returns teacher records under "students" property.
-          setTeachers(response.data.data.students);
+          // Set teachers from the correct property returned by your backend.
+          setTeachers(response.data.data.teachers);
         } catch (err) {
           console.error("Error fetching teachers:", err);
           setError(err.response?.data?.message || err.message);
@@ -63,19 +62,20 @@ const TeachersList = () => {
   // Client-side filtering based on selected class and search query for username.
   const filteredTeachers = teachers.filter((teacher) => {
     let matchesClass = true;
+    // Use teacher.className instead of teacher.class
     if (selectedClass && selectedClass !== "All Classes") {
       if (selectedClass === "Other") {
-        const teacherClassNum = Number(teacher.class);
+        const teacherClassNum = Number(teacher.className);
         matchesClass =
           isNaN(teacherClassNum) ||
-          teacher.class === undefined ||
+          teacher.className === undefined ||
           teacherClassNum < 1 ||
           teacherClassNum > 12;
       } else {
         // For a numeric class, match exactly.
         matchesClass =
-          teacher.class !== undefined &&
-          Number(teacher.class) === Number(selectedClass);
+          teacher.className !== undefined &&
+          Number(teacher.className) === Number(selectedClass);
       }
     }
     const matchesSearch = teacher.username
@@ -88,12 +88,12 @@ const TeachersList = () => {
   const formatDOB = (dob) => {
     if (!dob) return "N/A";
     const date = new Date(dob);
-    return date.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString();
+    return `${day}-${month}-${year}`;
   };
+  
 
   if (loading) {
     return <div className="p-4 text-center">Loading teachers...</div>;
@@ -147,12 +147,24 @@ const TeachersList = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">S.No</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Username</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Phone</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Class</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">DOB</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                S.No
+              </th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                Name
+              </th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                Username
+              </th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                Phone
+              </th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                Class
+              </th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                DOB
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -162,11 +174,21 @@ const TeachersList = () => {
                 className="hover:bg-blue-50 cursor-pointer"
                 onClick={() => setSelectedTeacher(teacher)}
               >
-                <td className="px-4 py-2 text-sm text-gray-900">{index + 1}</td>
-                <td className="px-4 py-2 text-sm text-gray-900">{teacher.name}</td>
-                <td className="px-4 py-2 text-sm text-gray-900">{teacher.username || "N/A"}</td>
-                <td className="px-4 py-2 text-sm text-gray-900">{teacher.phone || "N/A"}</td>
-                <td className="px-4 py-2 text-sm text-gray-900">{teacher.class || "N/A"}</td>
+                <td className="px-4 py-2 text-sm text-gray-900">
+                  {index + 1}
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-900">
+                  {teacher.name}
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-900">
+                  {teacher.username || "N/A"}
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-900">
+                  {teacher.phone || "N/A"}
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-900">
+                  {teacher.className || "N/A"}
+                </td>
                 <td className="px-4 py-2 text-sm text-gray-900">
                   {teacher.dateOfBirth ? formatDOB(teacher.dateOfBirth) : "N/A"}
                 </td>
@@ -180,17 +202,25 @@ const TeachersList = () => {
       {selectedTeacher && (
         <div className="mt-8 p-4 border rounded shadow bg-white">
           <h2 className="text-xl font-bold mb-2">Teacher Details</h2>
-          <p><strong>Name:</strong> {selectedTeacher.name}</p>
-          <p><strong>Username:</strong> {selectedTeacher.username || "N/A"}</p>
-          <p><strong>Phone:</strong> {selectedTeacher.phone || "N/A"}</p>
-          <p><strong>Class:</strong> {selectedTeacher.class || "N/A"}</p>
+          <p>
+            <strong>Name:</strong> {selectedTeacher.name}
+          </p>
+          <p>
+            <strong>Username:</strong> {selectedTeacher.username || "N/A"}
+          </p>
+          <p>
+            <strong>Phone:</strong> {selectedTeacher.phone || "N/A"}
+          </p>
+          <p>
+            <strong>Class:</strong> {selectedTeacher.className || "N/A"}
+          </p>
           <p>
             <strong>Date of Birth:</strong>{" "}
             {selectedTeacher.dateOfBirth ? formatDOB(selectedTeacher.dateOfBirth) : "N/A"}
           </p>
           <button
             className="mt-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition"
-            onClick={() => setSelectedTeacher(null)}
+            onClick={() => setSelectedTeahcer(null)}
           >
             Close Details
           </button>

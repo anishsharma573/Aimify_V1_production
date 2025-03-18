@@ -72,23 +72,23 @@ const MainLayout = () => {
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Protected Routes for Master Admin only */}
-        <Route element={<ProtectedRoute allowedRoles={["master_admin"]} userRole={userRole} />}>
+       
           <Route path="/create-school" element={<CreateSchool />} />
           <Route path="/admin-dashboard" element={<AdminDashBoard />} />
           <Route path="/allschools" element={<SchoolsList />} />
           <Route path="/create-school-admin/:schoolId" element={<CreateSchoolAdmin />} />
           <Route path="/upload-questions" element={<UploadQuestions />} />
           <Route path="/school-admins" element={<SchoolAdmins />} />
-        </Route>
+       
 
         {/* Protected Routes for Master Admin and School Admin */}
-        <Route element={<ProtectedRoute allowedRoles={[ "school_admin"]} userRole={userRole} />}>
+      
           <Route path="/school-admin/dashboard" element={<SchoolAdminDashboard />} />
           <Route path="/schools/:schoolId/students" element={<StudentsList />} />
           <Route path="/schools/:schoolId/teacher" element={<TeachersList />} />
           <Route path="/schools/:schoolId/add-student" element={<AddStudent />} />
           <Route path="/schools/:schoolId/add-teacher" element={<AddTeacher />} />
-        </Route>
+      
       </Routes>
     </>
   );

@@ -9,7 +9,7 @@ const app = express();
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (origin.includes("localhost:5173")) {
+    if (origin.includes("localhost")) {
       return callback(null, true);
     } else {
       return callback(new Error("Not allowed by CORS"), false);

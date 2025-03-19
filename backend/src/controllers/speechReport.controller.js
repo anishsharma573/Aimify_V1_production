@@ -3,23 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-/**
- * Create a new Speech Report.
- * Expects in req.body:
- *   - user: (ID of the student evaluated)
- *   - languageProficiency: { score: Number, remark: String }
- *   - speed: { score: Number, remark: String }
- *   - pitch: { score: Number, remark: String }
- *   - fillers: { score: Number, remark: String }
- *   - grammar: { score: Number, remark: String }
- *   - speechStructure: { score: Number, remark: String }
- *   - accent: { score: Number, remark: String }
- *   - neckEyeMovements: { score: Number, remark: String }
- *   - handMovements: { score: Number, remark: String }
- *   - bodyMovementPosture: { score: Number, remark: String }
- *   - confidence: { score: Number, remark: String }
- *   - overallComments: String (optional)
- */
+
 export const createSpeechReport = asyncHandler(async (req, res) => {
   const {
     user,

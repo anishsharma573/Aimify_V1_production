@@ -3,6 +3,7 @@ import { School } from "../models/school.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import bcrypt from "bcryptjs";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -74,6 +75,96 @@ const studentLogin = asyncHandler(async (req, res, next) => {
     );
 });
 
+const getStudentsByClass = asyncHandler(async (req, res) => {
+  const { className } = req.params; // Assuming the class is passed as a URL parameter
+
+  // Find students by class
+  const students = await User.find({ role: "student", className });
+
+  // If no students are found, return an error
+  if (!students || students.length === 0) {
+    throw new ApiError(404, "No students found for the provided class.");
+  }
+
+  // Get the total number of students
+  const totalStudents = await User.countDocuments({ role: "student", className });
+
+  // Return the list of students and total count
+  return res.status(200).json(
+    new ApiResponse(200, { students, totalStudents }, "Students found successfully.")
+  );
+});
 
 
-export { studentLogin };
+ const updateStudentProfile = asyncHandler(async (req, res) => {
+  const { userId } = req.params; // Get the student ID from URL parameter
+  const student = await User.findById(userId);
+
+  // Check if the student exists
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  // Ensure the logged-in user can only update their own profile
+  if (student._id.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You can only update your own profile");
+  }
+
+  // Get the fields from the request body
+  const {
+    name,
+    
+    dateOfBirth,
+    phone,
+    location,
+    className,
+    profile,
+    hobbies,
+    idol,
+    goals,
+    academics,
+    skills,
+    parents,
+  } = req.body;
+
+  // Logo Upload
+  let logoUrl = student.logo; // Keep existing logo if no new file is provided
+  if (req.file) {
+    // If a file is provided, upload it to Cloudinary
+    const result = await uploadOnCloudinary(req.file.path);
+    if (!result) {
+      throw new ApiError(500, "Error uploading logo to Cloudinary");
+    }
+    logoUrl = result.secure_url;
+  }
+
+  // Update the student profile fields
+  if (name) student.name = name;
+ 
+  if (dateOfBirth) student.dateOfBirth = dateOfBirth;
+  if (phone) student.phone = phone;
+  if (location) student.location = location;
+  if (className) student.className = className;
+  if (profile) student.profile = { ...student.profile, ...profile };
+  if (hobbies) student.hobbies = hobbies;
+  if (idol) student.idol = idol;
+  if (goals) student.goals = goals;
+  if (academics) student.academics = academics;
+  if (skills) student.skills = skills;
+  if (parents) student.parents = parents;
+
+  // Update logo (profile picture)
+  student.logo = logoUrl;
+
+  // Save the updated student profile
+  const updatedStudent = await student.save();
+
+  // Return the updated profile
+  res.status(200).json({
+    message: "Profile updated successfully",
+    data: updatedStudent,
+  });
+});
+
+
+export { studentLogin ,getStudentsByClass ,updateStudentProfile};

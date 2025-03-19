@@ -13,6 +13,9 @@ const UserSchema = new mongoose.Schema({
         enum: ['master_admin', 'school_admin', 'teacher', 'student'], 
         default: 'student' 
     },
+    logo:{
+        type: String,
+    },
 
     phone: { type: String, required: false },
     location: { type: String, required: false },

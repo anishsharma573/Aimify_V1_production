@@ -11,16 +11,19 @@ app.use(cors({
     if (!origin) {
       return callback(null, true); // Allows requests without an origin (e.g., curl)
     }
-    if (origin.includes("localhost:59316")) {
-      return callback(null, true); // Allow localhost on port 59316
+    if (origin.includes("localhost")) {
+      return callback(null, true); // Allow localhost (adjust if needed)
     } else {
       return callback(new Error("Not allowed by CORS"), false);
     }
   },
-  credentials: true, // If you want to include cookies with requests
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "schoolurl"], // Add schoolurl here
 }));
+
+app.options("*", cors()); // Handle preflight requests
+
 
 
 // ---- Express Middlewares ----

@@ -5,13 +5,11 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
  const getSchoolBySubdomain = asyncHandler(async (req, res, next) => {
   // Extract the subdomain from the request body or fallback to the host header.
-  const clientSubdomain = req.body.subdomain;
-  let host = req.headers.host;
-  if (host.includes(":")) {
-    host = host.split(":")[0];
-  }
-  const derivedSubdomain = host.split(".")[0].toLowerCase();
-  const subdomain = clientSubdomain || derivedSubdomain;
+  const clientSubdomain = req.headers.host;
+ 
+
+  
+  const subdomain = clientSubdomain ;
 
   console.log("Extracted subdomain:", subdomain);
 

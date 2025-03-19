@@ -7,6 +7,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
   // Extract the subdomain from the request body or fallback to the host header.
   const clientSubdomain = req.headers.host;
  
+console.log("Host:", req.headers.host);
 
   
   const subdomain = clientSubdomain ;

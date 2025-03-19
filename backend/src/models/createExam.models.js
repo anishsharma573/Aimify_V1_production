@@ -36,11 +36,17 @@ const paperSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Creator (User) is required"],
     },
-    // Store the class name as a simple string (renamed to "className")
     className: {
       type: String,
       required: [true, "Class name is required"],
       trim: true,
+    },
+    // New field for the date of the exam
+    dateOfExam: {
+      type: Date,
+      required: [true, "Date of the exam is required"],
+      // You could optionally set a default here if needed:
+      // default: Date.now,
     },
     results: [
       {
@@ -53,15 +59,18 @@ const paperSchema = new mongoose.Schema(
           type: Number,
           default: null,
         },
-        remarks: { type: String, default: "" },
+        remarks: {
+          type: String,
+          default: "",
+        },
       },
     ],
     questions: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Question"
-      }
-    ]
+        ref: "Question",
+      },
+    ],
   },
   {
     timestamps: true,

@@ -16,6 +16,11 @@ const questionSchema = new mongoose.Schema({
         enum: ['MCQ', 'TRUE_FALSE', 'SHORT_ANSWER', 'FILL_IN_THE_BLANK', 'MATCHING', 'ESSAY', 'CODING'],
         required: true
     },
+    marks:{
+        type: String,
+        required: true
+ 
+    },
     options: {
         type: [String], // Only for MCQ & TRUE_FALSE
         validate: {

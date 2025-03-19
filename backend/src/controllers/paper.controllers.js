@@ -1,46 +1,49 @@
 // controllers/paper.controllers.js
-import Paper from "../models/createExam.models.js"
+import Paper from "../models/createExam.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.models.js";
 import PDFDocument from "pdfkit";
 import { School } from "../models/school.models.js";
-
 import "pdfkit-table"; // This line patches PDFDocument with doc.table
-
-
-// Optionally, import a validation library (e.g., Joi) for input validation
-
+import moment from "moment";
+// 1. Assign Paper (with Date)
 export const assignPaper = asyncHandler(async (req, res) => {
-  const {
+  let {
     subject,
     examName,
     topic,
     subTopic,
     totalMarks,
-    className, // storing class as a string
+    className,
+    dateOfExam, // "19-03-2025" from client
   } = req.body;
 
-  // Basic validation: Check for required fields
-  if (!subject || !examName || !topic || !subTopic || !totalMarks || !className) {
-    throw new ApiError(400, "Missing required fields");
+  // Validate required fields
+  if (!subject || !examName || !topic || !subTopic || !totalMarks || !className || !dateOfExam) {
+    throw new ApiError(400, "Missing required fields: subject, examName, topic, subTopic, totalMarks, className, dateOfExam");
   }
-  
+
+  // Parse dateOfExam from "DD-MM-YYYY" -> JS Date
+  const parsedDate = moment(dateOfExam, "DD-MM-YYYY", true); 
+  if (!parsedDate.isValid()) {
+    throw new ApiError(400, "Invalid date format. Use DD-MM-YYYY.");
+  }
+
   // Additional validations: Ensure totalMarks is a positive number
   if (isNaN(totalMarks) || Number(totalMarks) <= 0) {
     throw new ApiError(400, "Total marks must be a positive number");
   }
 
-  // Ensure teacher is logged in (assumed to be set in req.user)
+  // Ensure teacher is logged in
   if (!req.user) {
     throw new ApiError(401, "Not authorized");
   }
 
-  // Retrieve teacher details from req.user
   const teacherId = req.user._id;
   const schoolId = req.user.schoolId;
 
-  // Create a new exam paper, initially without results
+  // Create the exam paper using the parsed Date object
   let paper = await Paper.create({
     subject,
     examName,
@@ -50,23 +53,17 @@ export const assignPaper = asyncHandler(async (req, res) => {
     school: schoolId,
     createdBy: teacherId,
     className,
+    dateOfExam: parsedDate.toDate(), // <--- pass a real Date object
   });
-console.log("schoolid",schoolId, className)
-  // Fetch all students for this school and class (role "student")
-  const students = await User.find({ schoolId, className, role: "student" });
-console.log(students)
-  // Log if no students are found (optional)
-  if (students.length === 0) {
-    console.warn(`No students found for schoolId: ${schoolId} and className: ${className}`);
-  }
 
-  // Map each student to an entry in the results array with default marks (null)
+  // Now Mongoose won't complain about casting
+  // Next steps: fetch students, map results, save, etc.
+
+  const students = await User.find({ schoolId, className, role: "student" });
   const results = students.map((student) => ({
     student: student._id,
-    marksObtained: null, // Marks will be updated later
+    marksObtained: null,
   }));
-
-  // Update the paper with the results array
   paper.results = results;
   await paper.save();
 
@@ -80,14 +77,53 @@ console.log(students)
   });
 });
 
-
+// 2. Fetch Exams by Class, Subject, and Date (Month & Year)
 export const getExamsByClass = asyncHandler(async (req, res) => {
-  const { className } = req.params;
+  const {
+    className, // from req.query or req.params
+    subject,
+    month,
+    year,
+  } = req.query; // or req.params, depending on your route setup
+
+  if (!className || !subject || !month || !year) {
+    throw new ApiError(400, "className, subject, month, and year are required");
+  }
+
+  // Convert month & year to numbers
+  const numericMonth = parseInt(month, 10); // e.g., 9 for September
+  const numericYear = parseInt(year, 10);   // e.g., 2023
+
+  if (
+    isNaN(numericMonth) ||
+    numericMonth < 1 ||
+    numericMonth > 12 ||
+    isNaN(numericYear) ||
+    numericYear < 1970
+  ) {
+    throw new ApiError(400, "Invalid month or year");
+  }
+
+  // Build date range for the specified month & year
+  // e.g., for Sep 2023, startDate = 2023-09-01, endDate = 2023-10-01
+  const startDate = new Date(numericYear, numericMonth - 1, 1);
+  const endDate = new Date(numericYear, numericMonth, 1);
+
   const schoolId = req.user.schoolId; // assuming req.user is set
-  const exams = await Paper.find({
-    className: { $regex: new RegExp(`^${className}$`, 'i') }
-  });
-  
+
+  // Build the filter
+  const filter = {
+    school: schoolId,
+    className: { $regex: new RegExp(`^${className}$`, "i") },
+    subject: { $regex: new RegExp(`^${subject}$`, "i") },
+    dateOfExam: {
+      $gte: startDate,
+      $lt: endDate,
+    },
+  };
+
+  const exams = await Paper.find(filter);
+
   res.status(200).json({
     status: 200,
     message: "Exams fetched successfully",
@@ -95,6 +131,7 @@ export const getExamsByClass = asyncHandler(async (req, res) => {
   });
 });
 
+// 3. Get Paper by ID
 export const getPaperById = asyncHandler(async (req, res) => {
   const { paperId } = req.params;
 
@@ -121,8 +158,7 @@ export const getPaperById = asyncHandler(async (req, res) => {
   });
 });
 
-
-
+// 4. Update Exam Marks
 export const updateExamMarks = asyncHandler(async (req, res) => {
   const { paperId, results: updates } = req.body;
   
@@ -183,7 +219,7 @@ export const updateExamMarks = asyncHandler(async (req, res) => {
   });
 });
 
-
+// 5. Download Exam Results as PDF
 export const downloadExamResultsPDF = asyncHandler(async (req, res) => {
   const { paperId } = req.params;
   if (!paperId) {
@@ -343,6 +379,7 @@ export const downloadExamResultsPDF = asyncHandler(async (req, res) => {
   doc.end();
 });
 
+// 6. Set Paper Questions
 export const setPaperQuestions = asyncHandler(async (req, res) => {
   const { paperId, questionIds } = req.body;
 
@@ -380,6 +417,41 @@ export const setPaperQuestions = asyncHandler(async (req, res) => {
 
 
 
+// controllers/paper.controllers.js
+export const getAllStudentResults = asyncHandler(async (req, res) => {
+  // Must be a logged-in student
+  if (!req.user || req.user.role !== "student") {
+    throw new ApiError(401, "Not authorized");
+  }
 
+  // Find all papers that have this student's ID in their results array
+  // Sort by dateOfExam descending so the newest exam is first
+  const papers = await Paper.find({ "results.student": req.user._id })
+    .sort({ dateOfExam: -1 });
 
+  // Build an array of only the relevant info for each paper + the student's result
+  const resultsData = papers.map((paper) => {
+    // The result entry for this student
+    const studentResult = paper.results.find(
+      (r) => r.student.toString() === req.user._id.toString()
+    );
 
+    return {
+      paperId: paper._id,
+      examName: paper.examName,
+      dateOfExam: paper.dateOfExam,
+      topic: paper.topic,
+      subTopic: paper.subTopic,
+      totalMarks: paper.totalMarks,
+      // Student-specific fields
+      marksObtained: studentResult ? studentResult.marksObtained : null,
+      remarks: studentResult ? studentResult.remarks : "",
+    };
+  });
+
+  res.status(200).json({
+    status: 200,
+    message: "All exam results for this student",
+    data: resultsData,
+  });
+});

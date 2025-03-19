@@ -220,8 +220,8 @@ const UpdateMarksForm = () => {
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                        Student Name
-                      </th>
+                    
+                      </th>    Student Name
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                         Marks Obtained
                       </th>

@@ -64,6 +64,7 @@ export const addQuestionFromJson = asyncHandler(async (req, res) => {
       tags: q.tags || [],
       explanation: q.explanation || "",
       bloomsTaxonomy: q.bloomsTaxonomy || "",
+      marks: q.marks || 0,
       createdBy: q.createdBy,
 
       // For MCQ / TRUE_FALSE
@@ -283,7 +284,7 @@ export const addSingleQuestion = asyncHandler(async (req, res) => {
 
     // For MATCHING questions
     matchingPairs: q.matchingPairs || [],
-
+       marks: q.marks || 0,
     // For CODING questions
     codingQuestion: q.codingQuestion || null,
   };

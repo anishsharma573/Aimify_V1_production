@@ -1,7 +1,7 @@
 import Router from "express";
 import isMasterAdmin from "../middleware/masterAdmin.middleware.js";
 import { verifyJWT } from "../middleware/auth.middlwares.js";
-import { assignPaper , updateExamMarks,getExamsByClass, getPaperById, setPaperQuestions,downloadExamResultsPDF} from "../controllers/paper.controllers.js";
+import { assignPaper , updateExamMarks,getExamsByClass, getPaperById,getAllStudentResults, setPaperQuestions,downloadExamResultsPDF} from "../controllers/paper.controllers.js";
 
 
 const router = Router();
@@ -11,9 +11,9 @@ router.use(verifyJWT);
 
 router.post("/create/exam", assignPaper); 
 router.put("/update-marks", updateExamMarks);
-router.get("/exams/:className", getExamsByClass);
+router.get("/exams", getExamsByClass);
 router.get("/:paperId", getPaperById);
-
+router.get("/exam/student/all-results", verifyJWT, getAllStudentResults);
 router.put("/set-paper-questions", setPaperQuestions);
 
 

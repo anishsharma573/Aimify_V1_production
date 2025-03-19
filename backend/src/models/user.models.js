@@ -92,7 +92,7 @@ UserSchema.methods.generateAccessToken = function () {
         },
         process.env.ACCESS_TOKEN_SECRET || "defaultAccessTokenSecret", // Fallback
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m", // Fallback
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "7d", // Fallback
         }
     );
 };

@@ -7,13 +7,20 @@ const app = express();
 
 // ---- CORS Setup ----
 app.use(cors({
-  origin: "*", // Allows all origins
-  credentials: true,
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true); // Allows requests without an origin (e.g., curl)
+    }
+    if (origin.includes("localhost:59316")) {
+      return callback(null, true); // Allow localhost on port 59316
+    } else {
+      return callback(new Error("Not allowed by CORS"), false);
+    }
+  },
+  credentials: true, // If you want to include cookies with requests
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
-
-app.options("*", cors()); // Handles preflight requests for all routes
 
 
 // ---- Express Middlewares ----

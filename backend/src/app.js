@@ -7,19 +7,14 @@ const app = express();
 
 // ---- CORS Setup ----
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (origin.includes("localhost")) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"), false);
-    }
-  },
+  origin: "*", // Allows all origins
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
-app.options("*", cors());
+
+app.options("*", cors()); // Handles preflight requests for all routes
+
 
 // ---- Express Middlewares ----
 app.use(express.json({ limit: "16kb" }));

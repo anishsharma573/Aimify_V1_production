@@ -75,7 +75,7 @@ const studentLogin = asyncHandler(async (req, res, next) => {
     );
 });
 
-const getStudentsByClass = asyncHandler(async (req, res) => {
+const getStudentsByClassAndSubdomain  = asyncHandler(async (req, res) => {
   const { className, subdomain } = req.query; // Extract className and subdomain from query parameters
 
   // Validate if className and subdomain are provided
@@ -181,4 +181,4 @@ const getStudentsByClass = asyncHandler(async (req, res) => {
 
 
 
-export { studentLogin ,getStudentsByClass ,updateStudentProfile};
+export { studentLogin ,getStudentsByClassAndSubdomain  ,updateStudentProfile};

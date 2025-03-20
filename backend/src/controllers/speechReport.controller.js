@@ -19,6 +19,7 @@ export const createSpeechReport = asyncHandler(async (req, res) => {
     bodyMovementPosture,
     confidence,
     overallComments,
+    createdBy
   } = req.body;
 
   // Validate required fields
@@ -34,7 +35,8 @@ export const createSpeechReport = asyncHandler(async (req, res) => {
     !neckEyeMovements ||
     !handMovements ||
     !bodyMovementPosture ||
-    !confidence
+    !confidence||
+    !createdBy
   ) {
     throw new ApiError(400, "Missing required fields for speech report");
   }
@@ -53,6 +55,7 @@ export const createSpeechReport = asyncHandler(async (req, res) => {
     bodyMovementPosture,
     confidence,
     overallComments,
+    createdBy
   });
 
   const savedReport = await newReport.save();

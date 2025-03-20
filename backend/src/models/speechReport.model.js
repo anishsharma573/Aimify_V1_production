@@ -174,6 +174,23 @@ const speechReportSchema = new mongoose.Schema(
     overallComments: {
       type: String,
     },
+    reportGenerated:{
+        type: Boolean,
+        default: false
+
+    },
+    reportSent:{
+        type: Boolean,
+        default: false
+    },
+    reportUrl:{
+        type: String 
+    },
+    createdBy:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    }
   },
   { timestamps: true }
 );

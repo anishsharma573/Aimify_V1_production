@@ -1,6 +1,6 @@
 import Router from "express";
 import isMasterAdmin from "../middleware/masterAdmin.middleware.js";
-import { Dashboard , createSchool , createSchoolAdmin, masterAdminLogin, allSchools, allSchoolsAdmin} from "../controllers/masterAdmin.controllers.js";
+import { Dashboard , createSchool , createSchoolAdmin, masterAdminLogin, getUserById,allSchools, allSchoolsAdmin} from "../controllers/masterAdmin.controllers.js";
 import { verifyJWT } from "../middleware/auth.middlwares.js";
 import multer from "multer";
 
@@ -13,7 +13,7 @@ router.get("/dashboard",isMasterAdmin,Dashboard);
 router.post("/create-school", verifyJWT, isMasterAdmin ,upload.single("logo"), createSchool);
 router.get("/allschools",isMasterAdmin,allSchools);
 router.get("/allschoolsadmins",isMasterAdmin,allSchoolsAdmin);
-
+router.get('/:userId', getUserById);
 //school admin
 router.post("/schools/:schoolId/admin",isMasterAdmin,createSchoolAdmin);
 

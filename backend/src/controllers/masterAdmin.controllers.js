@@ -171,11 +171,30 @@ const allSchoolsAdmin = asyncHandler(async (req, res, next) => {
         .json(new ApiResponse(200, { schoolAdmins }, "School admins fetched successfully"));
 });
 
+ const getUserById = asyncHandler(async (req, res) => {
+    const { userId } = req.params; // Get the user ID from URL parameter
+  
+    // Find the user by ID
+    const user = await User.findById(userId);
+  
+    // If the user doesn't exist, throw an error
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+  
+    // Return the user data
+    res.status(200).json({
+      message: "User found successfully",
+      data: user,
+    });
+  });
+
 export {
     Dashboard,
     createSchool,
     allSchoolsAdmin,
     masterAdminLogin,
     allSchools,
-    createSchoolAdmin
+    createSchoolAdmin,
+    getUserById
 };

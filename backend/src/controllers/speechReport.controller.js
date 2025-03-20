@@ -19,7 +19,8 @@ export const createSpeechReport = asyncHandler(async (req, res) => {
     bodyMovementPosture,
     confidence,
     overallComments,
-    createdBy
+    createdBy,
+    
   } = req.body;
 
   // Validate required fields
@@ -55,7 +56,9 @@ export const createSpeechReport = asyncHandler(async (req, res) => {
     bodyMovementPosture,
     confidence,
     overallComments,
-    createdBy
+    createdBy,
+      reportSent: false, // Initially, reportSent is false
+    reportUrl: null,   // Initially, reportUrl is null
   });
 
   const savedReport = await newReport.save();

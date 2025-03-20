@@ -76,22 +76,34 @@ const studentLogin = asyncHandler(async (req, res, next) => {
 });
 
 const getStudentsByClass = asyncHandler(async (req, res) => {
-  const { className } = req.params; // Assuming the class is passed as a URL parameter
+  const { className, subdomain } = req.query; // Extract className and subdomain from query parameters
 
-  // Find students by class
-  const students = await User.find({ role: "student", className });
+  // Validate if className and subdomain are provided
+  if (!className || !subdomain) {
+    throw new ApiError(400, "Both className and subdomain are required.");
+  }
+
+  // Find students by className and populate schoolId to get subdomain
+  const students = await User.find({ role: "student", className })
+    .populate({
+      path: 'schoolId', // Populate the schoolId field from the User model
+      select: 'subdomain' // Select only the subdomain field from the School model
+    });
+
+  // Filter students by subdomain (matching the subdomain from the query)
+  const filteredStudents = students.filter(student => student.schoolId.subdomain === subdomain);
 
   // If no students are found, return an error
-  if (!students || students.length === 0) {
-    throw new ApiError(404, "No students found for the provided class.");
+  if (!filteredStudents || filteredStudents.length === 0) {
+    throw new ApiError(404, "No students found for the provided class and subdomain.");
   }
 
   // Get the total number of students
-  const totalStudents = await User.countDocuments({ role: "student", className });
+  const totalStudents = filteredStudents.length;
 
   // Return the list of students and total count
   return res.status(200).json(
-    new ApiResponse(200, { students, totalStudents }, "Students found successfully.")
+    new ApiResponse(200, { students: filteredStudents, totalStudents }, "Students found successfully.")
   );
 });
 

@@ -12,6 +12,6 @@ const router = Router();
 //school admin
 router.post("/login",studentLogin);
 router.use(verifyJWT);
-router.get('/:className', getStudentsByClass);
+router.get('/', getStudentsByClass);
 router.put("/update-profile/:userId", upload.single("file"), updateStudentProfile); 
 export default router

@@ -43,6 +43,7 @@ import schoolRoutes from "./routes/school.routes.js";
 import ExamRoutes from "./routes/paper.routes.js";
 import ExamPaperRoutes from "./routes/examPaper.routes.js";
 import SpeechReportRoutes from "./routes/speechReport.routes.js";
+import PersonalityReportRoutes from "./routes/personalityReport.routes.js";
 // ---- Use Routes ----
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/schooladmin", schooladminRoutes);
@@ -53,5 +54,6 @@ app.use("/api/v1/school", schoolRoutes);
 app.use("/api/v1/exam", ExamRoutes);
 app.use("/api/v1/set-paper", ExamPaperRoutes);
 app.use("/api/v1/speechReport", SpeechReportRoutes);
+app.use("/api/v1/personalityReport", PersonalityReportRoutes);
 
 export default app;

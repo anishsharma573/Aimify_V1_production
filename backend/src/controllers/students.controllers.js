@@ -18,19 +18,21 @@ const generateAccessAndRefreshToken = async (userId) => {
   return { accessToken, refreshToken };
 };
 
-const studentLogin = asyncHandler(async (req, res, next) => {
-  // Check if the client provided a subdomain; otherwise, derive it from the host header.
-  const clientSubdomain = req.body.subdomain;
-  let hostSubdomain = req.headers.host;
-  if (hostSubdomain.includes(":")) {
-    hostSubdomain = hostSubdomain.split(":")[0];
+ const studentLogin = asyncHandler(async (req, res, next) => {
+  // Require subdomain from the request body
+  const { subdomain, username, password } = req.body;
+
+  if (!subdomain) {
+    throw new ApiError(400, "Subdomain is required in the request body");
   }
-  const subdomain = clientSubdomain || hostSubdomain.split(".")[0].toLowerCase();
 
-  console.log("Host:", req.headers.host);
-  console.log("Extracted subdomain:", subdomain);
+  if (!username || !password) {
+    throw new ApiError(400, "Username and password are required");
+  }
 
-  // Lookup the school based on the subdomain.
+  console.log("Subdomain from body:", subdomain);
+
+  // Lookup the school based on the subdomain
   const school = await School.findOne({ subdomain });
   console.log("Found school:", school);
 
@@ -38,30 +40,45 @@ const studentLogin = asyncHandler(async (req, res, next) => {
     throw new ApiError(404, "School not found for the provided subdomain");
   }
 
-  const { username, password } = req.body;
-  if (!username || !password) {
-    throw new ApiError(400, "Username and password are required");
-  }
-  
-  const student = await User.findOne({ username, schoolId: school._id, role: "student" });
+  // Find the student by username, role, and schoolId
+  const student = await User.findOne({
+    username,
+    schoolId: school._id,
+    role: "student",
+  });
+
   if (!student) {
-    throw new ApiError(400, "Invalid credentials or user does not belong to this school");
+    throw new ApiError(
+      400,
+      "Invalid credentials or user does not belong to this school"
+    );
   }
-  
+
+  // Validate the password
   const isPasswordValid = await student.isPasswordCorrect(password);
   if (!isPasswordValid) {
     throw new ApiError(400, "Invalid password");
   }
-  
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(student._id);
-  const loggedInUser = await User.findById(student._id).select("-password -refreshToken");
+
+  // Generate tokens
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    student._id
+  );
+
+  // Remove sensitive fields before sending the user back
+  const loggedInUser = await User.findById(student._id).select(
+    "-password -refreshToken"
+  );
+
+  // Set cookie options
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "Strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
-  
+
+  // Send response
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -74,7 +91,6 @@ const studentLogin = asyncHandler(async (req, res, next) => {
       )
     );
 });
-
 const getStudentsByClassAndSubdomain  = asyncHandler(async (req, res) => {
   const { className, subdomain } = req.query; // Extract className and subdomain from query parameters
 

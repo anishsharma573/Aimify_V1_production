@@ -5,8 +5,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import Question from "../models/question.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+
+
 export const createExamPaper = asyncHandler(async (req, res) => {
-  const { examName, className, subject, questionIds, createdBy } = req.body;
+  const { examName, className, subject, questionIds, createdBy, schoolId } = req.body;
 
   // Validate required fields.
   if (
@@ -15,28 +17,46 @@ export const createExamPaper = asyncHandler(async (req, res) => {
     !subject ||
     !questionIds ||
     !Array.isArray(questionIds) ||
-    questionIds.length === 0
+    questionIds.length === 0 ||
+    !schoolId
   ) {
     throw new ApiError(
       400,
-      "Missing required fields: examName, className, subject, and questionIds are required"
+      "Missing required fields: examName, className, subject, questionIds, and schoolId are required"
     );
   }
 
-  // Create the exam paper document.
-  const newExamPaper = new ExamPaper({
+  // Fetch all students from the given className and schoolId
+  const students = await User.find({ role: "student", className, schoolId });
+
+  // If no students are found, return an error
+  if (students.length === 0) {
+    throw new ApiError(404, "No students found for the given className and schoolId");
+  }
+
+  // Map the students to results with default marksObtained
+  const results = students.map(student => ({
+    student: student._id,
+    marksObtained: null, // Initialize marks to null
+  }));
+
+  // Create the exam paper document
+  const newExamPaper = new Paper({
     examName,
     className,
     subject,
     questions: questionIds,
     createdBy,
+    school: schoolId, // Link to the specific school
+    results, // Assign the results with students
   });
 
-  // Saving the exam paper triggers the pre-save hook to compute totalMarks.
+  // Saving the exam paper
   const savedExamPaper = await newExamPaper.save();
 
   return res.status(201).json(new ApiResponse(201, savedExamPaper, "Exam paper created successfully"));
 });
+
 
 export const getQuestionsByClassTopicSubtopic = asyncHandler(async (req, res) => {
   const { className, subject, topic, subTopic } = req.query;

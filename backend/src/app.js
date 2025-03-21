@@ -16,7 +16,7 @@ app.use(cors({
     if (!origin) {
       return callback(null, true); // Allows requests without an origin (e.g., curl)
     }
-    if (origin.includes("localhost")|| origin.includes(".")) {
+    if (origin.includes("localhost")|| origin.includes("web.app")) {
       return callback(null, true); // Allow localhost (adjust if needed)
     } else {
       return callback(new Error("Not allowed by CORS"), false);

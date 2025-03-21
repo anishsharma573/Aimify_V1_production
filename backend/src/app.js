@@ -2,16 +2,21 @@ import express from 'express';
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const app = express();
-
+app.use('/public', express.static(path.join(__dirname, 'public')));
 // ---- CORS Setup ----
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) {
       return callback(null, true); // Allows requests without an origin (e.g., curl)
     }
-    if (origin.includes("localhost")) {
+    if (origin.includes("localhost")|| origin.includes(".")) {
       return callback(null, true); // Allow localhost (adjust if needed)
     } else {
       return callback(new Error("Not allowed by CORS"), false);

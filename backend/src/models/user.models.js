@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken";
+
 const UserSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     username: { type: String, required: true, unique: true, trim: true },
@@ -55,8 +56,8 @@ const UserSchema = new mongoose.Schema({
         lifeSkills: [{ type: String }],
         technicalSkills: [{ type: String }]
     },
-    
-
+    skillScore:{
+    },
     hobbies: [{ type: String }],
 
     idol: { type: String },

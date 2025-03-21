@@ -13,5 +13,5 @@ const router = Router();
 router.post("/login",studentLogin);
 router.use(verifyJWT);
 router.get('/', getStudentsByClassAndSubdomain );
-router.put("/update-profile/:userId", upload.single("file"), updateStudentProfile); 
+router.put("/update-profile/:userId", upload.single("logo"), updateStudentProfile); 
 export default router

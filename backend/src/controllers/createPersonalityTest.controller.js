@@ -100,31 +100,72 @@ export const createPersonalityTest = asyncHandler(async (req, res) => {
     });
   });
 
-  export const getTestResults = asyncHandler(async (req, res) => {
-    // Extract the studentId from query parameters
-    const { studentId } = req.query;
-    
-    // Validate that a studentId was provided
-    if (!studentId) {
-      throw new ApiError(400, "Student ID is required to fetch test responses");
-    }
-    
-    // Retrieve responses for the given student
-    const responses = await PersonalityTestResponse.find({ student: studentId })
-      .populate({
-        path: "student",
-        select: "name username",
-        model: "user"  // Use the registered model name (if registered as 'user')
-      })
-      .populate("test", "title description");
-    
-    if (!responses || responses.length === 0) {
-      throw new ApiError(404, "No test responses found for the given student");
-    }
-    
-    return res.status(200).json({
-      success: true,
-      data: responses,
-      message: "Test responses for the student fetched successfully"
-    });
+export const getTestResults = asyncHandler(async (req, res) => {
+  // Extract the studentId from query parameters
+  const { studentId } = req.query;
+  
+  // Validate that a studentId was provided
+  if (!studentId) {
+    throw new ApiError(400, "Student ID is required to fetch test responses");
+  }
+  
+  // Retrieve responses for the given student
+  const responses = await PersonalityTestResponse.find({ student: studentId })
+    .populate({
+      path: "student",
+      select: "name username",
+      model: "user"  // Use the registered model name (if registered as 'user')
+    })
+    .populate("test", "title description");
+  
+  if (!responses || responses.length === 0) {
+    throw new ApiError(404, "No test responses found for the given student");
+  }
+  
+  return res.status(200).json({
+    success: true,
+    data: responses,
+    message: "Test responses for the student fetched successfully"
   });
+});
+
+
+export const checkTestSubmissionStatus = asyncHandler(async (req, res) => {
+  // Extract studentId and optionally testId from query parameters
+  const { studentId, testId } = req.query;
+  
+  // Validate that a studentId is provided
+  if (!studentId) {
+    throw new ApiError(400, "Student ID is required to check test submission status");
+  }
+  
+  // Build the query; if testId is provided, include it in the query.
+  const query = { student: studentId };
+  if (testId) {
+    query.test = testId;
+  }
+  
+  // Retrieve the latest submission for this student (and test, if provided)
+  const latestSubmission = await PersonalityTestResponse.findOne(query).sort({ createdAt: -1 });
+  
+  // Define the allowed retest period (e.g., one month in milliseconds; here 30 days)
+  const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+  
+  if (latestSubmission) {
+    const timeSinceSubmission = Date.now() - new Date(latestSubmission.createdAt).getTime();
+    if (timeSinceSubmission < ONE_MONTH_MS) {
+      return res.status(200).json({
+        success: false,
+        message: "You have already taken the test recently. You can retake it after one month.",
+        // Optionally, provide the next allowed submission time:
+        nextAllowedTime: new Date(new Date(latestSubmission.createdAt).getTime() + ONE_MONTH_MS)
+      });
+    }
+  }
+  
+  // If no recent submission exists, the student is allowed to take the test
+  return res.status(200).json({
+    success: true,
+    message: "You are allowed to take the test."
+  });
+});

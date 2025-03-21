@@ -2,7 +2,7 @@ import Router from "express";
 import isMasterAdmin from "../middleware/masterAdmin.middleware.js";
 import { verifyJWT } from "../middleware/auth.middlwares.js";
 import multer from "multer";
-import { createPersonalityTest ,getPersonalityTest ,submitPersonalityTestResponse, getTestResults} from "../controllers/createPersonalityTest.controller.js";
+import { createPersonalityTest ,getPersonalityTest ,checkTestSubmissionStatus, submitPersonalityTestResponse, getTestResults} from "../controllers/createPersonalityTest.controller.js";
 
 
 
@@ -17,5 +17,6 @@ router.post('/personality-test/response', submitPersonalityTestResponse);
 
 // Route to retrieve test results (GET)
 router.get('/personality-test/results', getTestResults);
+router.get('/personality-test/status', checkTestSubmissionStatus);
 
 export default router

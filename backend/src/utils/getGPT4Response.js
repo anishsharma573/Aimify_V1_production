@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const OPENAI_API_KEY = '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'; 
+//const OPENAI_API_KEY = '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'; 
 /**
  * Calls the GPT-4 API with the given prompt and returns the response.
  * Logs detailed error information if the call fails.

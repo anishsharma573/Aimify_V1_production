@@ -14,21 +14,27 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) {
-      return callback(null, true); // Allows requests without an origin (e.g., curl)
+      // Allows requests without an origin (e.g., server-to-server, curl)
+      return callback(null, true);
     }
-    if (origin.includes("localhost")|| origin.includes("web.app")) {
-      return callback(null, true); // Allow localhost (adjust if needed)
+    // Add your actual production domain check here:
+    if (
+      origin.includes("localhost") ||
+      origin.includes("web.app") ||
+      origin.includes("vercel.app")
+    ) {
+      return callback(null, true);
     } else {
       return callback(new Error("Not allowed by CORS"), false);
     }
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "schoolurl"], // Add schoolurl here
+  allowedHeaders: ["Content-Type", "Authorization", "schoolurl"],
 }));
 
-app.options("*", cors()); // Handle preflight requests
-
+// Handle preflight requests for all routes
+app.options("*", cors());
 
 
 // ---- Express Middlewares ----

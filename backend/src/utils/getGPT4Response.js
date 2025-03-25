@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const OPENAI_API_KEY = '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'; 
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY; 
 /**
  * Calls the GPT-4 API with the given prompt and returns the response.
  * Logs detailed error information if the call fails.
@@ -21,7 +21,7 @@ async function getGPT4Response(prompt) {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // change to 'gpt-4' if you have access
+        model: 'gpt-4o-mini', // or 'gpt-4' if you have full access
         messages: [
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content: prompt }
@@ -38,13 +38,17 @@ async function getGPT4Response(prompt) {
       } catch (parseErr) {
         errorDetails = 'Unable to parse error response as JSON';
       }
-      throw new Error(`GPT API Error: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorDetails)}`);
+      throw new Error(
+        `GPT API Error: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorDetails)}`
+      );
     }
 
     const data = await response.json();
     if (!data.choices || !data.choices.length) {
       throw new Error('GPT API returned no choices.');
     }
+
+    // Return the text from GPT
     return data.choices[0].message.content.trim();
   } catch (error) {
     console.error("Error in getGPT4Response:", error);

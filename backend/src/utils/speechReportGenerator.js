@@ -10,26 +10,34 @@ function removeMarkdown(text) {
 function fixGPTOutput(jsonString) {
   if (!jsonString) return '';
 
-  // Replace smart quotes
+  // 1. Remove any leading line that literally starts with "json"
+  //    This handles cases like:
+  //    json
+  //    {
+  //      ...
+  //    }
+  jsonString = jsonString.replace(/^json\s*\n?/, '');
+
+  // 2. Replace smart quotes
   jsonString = jsonString
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'");
 
-  // Remove commas before closing brackets
+  // 3. Remove commas before closing brackets
   jsonString = jsonString
     .replace(/,\s*]/g, ']')
     .replace(/,\s*}/g, '}')
     .replace(/,\s*,/g, ',');
 
-  // Fix missing array brackets after evaluation_breakdown
+  // 4. Fix missing array brackets after evaluation_breakdown
   jsonString = jsonString.replace(
-    /"evaluation_breakdown"\s*:\s*{/, 
+    /"evaluation_breakdown"\s*:\s*{/,
     '"evaluation_breakdown": [ {'
   );
 
-  // Ensure we close the array before overall_conclusion
+  // 5. Ensure we close the array before overall_conclusion
   jsonString = jsonString.replace(
-    /}\s*,\s*"overall_conclusion"/, 
+    /}\s*,\s*"overall_conclusion"/,
     '} ], "overall_conclusion"'
   );
 
@@ -37,13 +45,13 @@ function fixGPTOutput(jsonString) {
 }
 
 
-
-
-async function generateSpeechReport(name, classLevel, gender, speechEvaluations) {
-  const safe = (val) => JSON.stringify(String(val ?? 'Not Available').replace(/"/g, '\"').replace(/\n/g, ' '));
+async function generateSpeechReport(name, classLevel, gender,school, speechEvaluations) {
+  const safe = (val) => JSON.stringify(String(val ?? 'Not Available')
+    .replace(/"/g, '\"')
+    .replace(/\n/g, ' '));
 
   const prompt = `
-Generate a detailed speech assessment report  strictly in JSON format.
+Generate a detailed speech assessment report strictly in JSON format.
 keep in mind the array in json it doesn not haver , at end the after last object of any array do not add comman  .. add one comma before overall_conclusion  and do not add comma after  domain Confidence object like after domain Confidence this bracket} The report should contain the following sections:
 
 1. Overview: A brief overview of the test and student's overall performance.
@@ -61,6 +69,7 @@ All keys and values must use double quotes. Format should be like:
   "name": ${safe(name)},
   "class": ${safe(classLevel)},
   "gender": ${safe(gender)},
+  "school":${safe(gender)},
   "overview": "Please generate this based on the domain score and remark.",
   "evaluation_breakdown": [
     {
@@ -141,30 +150,40 @@ All keys and values must use double quotes. Format should be like:
       "improvement": "Please generate this based on the domain score and remark."
     }
   ],
- 
+
 }`;
 
   let result;
   const maxRetries = 3;
   let attempt = 0;
+
   while (attempt < maxRetries) {
     try {
       result = await getGPT4Response(prompt);
       if (result && result.trim().length > 0) break;
     } catch (error) {
-      console.error(`Attempt ${attempt + 1} failed: ${error}`);
+      console.error(`Attempt ${attempt + 1} failed:`, error);
     }
     attempt++;
   }
+
   if (!result || result.trim().length === 0) {
     throw new Error("Failed to generate report from GPT after several attempts.");
   }
 
+  // Clean up any markdown or potential formatting quirks
   const cleanedOutput = removeMarkdown(result);
   const fixedOutput = fixGPTOutput(cleanedOutput);
 
- 
-  return fixedOutput
+  // Now parse as JSON before returning
+  try {
+    const parsed = JSON.parse(fixedOutput);
+    return parsed; // Return the final JSON object
+  } catch (error) {
+    console.error("Failed to parse GPT response as JSON:", error);
+    console.error("GPT raw output was:", fixedOutput);
+    throw new Error("Failed to parse GPT response as JSON");
+  }
 }
 
 export { generateSpeechReport, removeMarkdown };

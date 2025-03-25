@@ -1,34 +1,18 @@
 // models/personalityTestResponse.model.js
 import mongoose from 'mongoose';
-
-// Define a schema for an individual response
 const responseSchema = new mongoose.Schema({
-  questionLabel: { type: String, required: true },  // e.g., "Ques1"
-  answer: { type: String, required: true },         // e.g., "Agree"
-  mark: { type: Number, required: true }            // e.g., 4 (score based on the answer)
-}, { _id: false }); // No separate _id for each response object
+  questionLabel: { type: String, required: true },
+  questionText: { type: String }, // Add this field
+  answer: { type: String, required: true },
+  mark: { type: Number, required: true }
+}, { _id: false });
 
-// Define the main schema for the test responses
-const personalityTestResponseSchema = new mongoose.Schema(
-  {
-    student: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'User', 
-      required: true 
-    },
-    test: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'PersonalityTest', 
-      required: true 
-    },
-    responses: { 
-      type: [responseSchema], 
-      required: true 
-    }
-  },
-  { timestamps: true }
-);
+const personalityTestResponseSchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
+  test: { type: mongoose.Schema.Types.ObjectId, ref: 'PersonalityTest', required: true },
+  responses: [responseSchema]
+}, { timestamps: true });
 
-const PersonalityTestResponse = mongoose.model('PersonalityTestResponse', personalityTestResponseSchema);
+ const PersonalityTestResponse = mongoose.model('PersonalityTestResponse', personalityTestResponseSchema);
 
 export default PersonalityTestResponse;

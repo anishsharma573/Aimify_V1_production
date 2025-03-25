@@ -46,6 +46,9 @@ const UserSchema = new mongoose.Schema({
         strength: [{ type: String }],
         weakness: [{ type: String }]
     },
+    gender:{
+  type : String
+    },
 
     academics: {
         favSubjects: [{ type: String }],

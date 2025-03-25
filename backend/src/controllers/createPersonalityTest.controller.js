@@ -34,12 +34,11 @@ export const createPersonalityTest = asyncHandler(async (req, res) => {
 
   
   export const submitPersonalityTestResponse = asyncHandler(async (req, res) => {
-    // Expecting request body: { testId, responses: [{ questionLabel, answer }, ...], student }
+    // Expecting request body: { testId, responses: [{ questionLabel, answer }, ...], studentId }
     const { testId, responses, studentId } = req.body;
- 
   
     // Validate required fields
-    if (!testId || !responses || !studentId || !Array.isArray(responses) || responses.length === 0 || !studentId) {
+    if (!testId || !responses || !studentId || !Array.isArray(responses) || responses.length === 0) {
       throw new ApiError(400, 'Missing required fields: testId, responses, and student ID');
     }
   
@@ -71,7 +70,7 @@ export const createPersonalityTest = asyncHandler(async (req, res) => {
       "Strongly Agree": 5
     };
   
-    // Process and validate each response by calculating its mark
+    // Process and validate each response by calculating its mark and adding the question text.
     const processedResponses = responses.map(resp => {
       const { questionLabel, answer } = resp;
       if (!questionLabel || !answer) {
@@ -81,8 +80,12 @@ export const createPersonalityTest = asyncHandler(async (req, res) => {
       if (mark === undefined) {
         throw new ApiError(400, `Invalid answer option: ${answer}`);
       }
-      return { questionLabel, answer, mark };
+      // Look up the corresponding question text from the test's questions array.
+      const question = test.questions.find(q => q.label === questionLabel);
+      const questionText = question ? question.text : "";
+      return { questionLabel, questionText, answer, mark };
     });
+    
   
     // Create a new document in PersonalityTestResponse with the processed responses
     const newResponse = new PersonalityTestResponse({
@@ -99,7 +102,7 @@ export const createPersonalityTest = asyncHandler(async (req, res) => {
       message: 'Test response submitted successfully'
     });
   });
-
+  
 export const getTestResults = asyncHandler(async (req, res) => {
   // Extract the studentId from query parameters
   const { studentId } = req.query;
@@ -128,6 +131,7 @@ export const getTestResults = asyncHandler(async (req, res) => {
     message: "Test responses for the student fetched successfully"
   });
 });
+
 
 
 export const checkTestSubmissionStatus = asyncHandler(async (req, res) => {

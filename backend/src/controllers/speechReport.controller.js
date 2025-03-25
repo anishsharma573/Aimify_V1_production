@@ -97,7 +97,7 @@ export const getSpeechReportsForStudent = asyncHandler(async (req, res) => {
   
     const reportDoc = await SpeechReport.findById(reportId).populate({
       path: 'user',
-      select: 'name className gender profile role logo',
+      select: 'name className gender profile role logo school',
       model: 'user'
     });
   
@@ -145,11 +145,11 @@ export const getSpeechReportsForStudent = asyncHandler(async (req, res) => {
     const name = user.name;
     const classLevel = user.className;
     const gender = user.gender || "Not Provided";
-    const center = user.profile?.center || "Not Provided";
+    const school = user.school || "Not Provided";
   
     // Generate GPT-based report
-    const generatedReportJSON = await generateSpeechReport(name, classLevel, gender, speechEvaluations);
-  
+    const generatedReportJSON = await generateSpeechReport(name,  school,classLevel, gender, speechEvaluations);
+    console.log("[DEBUG] GPT raw output:\n", generatedReportJSON);
     let reportData;
     try {
       if (typeof generatedReportJSON === 'string') {
@@ -161,7 +161,7 @@ export const getSpeechReportsForStudent = asyncHandler(async (req, res) => {
       }
     } catch (err) {
       console.error("JSON parsing error:", err);
-      console.error("Generated Output:", generatedReportJSON);
+      // console.error("Generated Output:", generatedReportJSON);
       throw new ApiError(500, "Failed to parse generated report JSON");
     }
     
@@ -169,10 +169,11 @@ export const getSpeechReportsForStudent = asyncHandler(async (req, res) => {
     
   
     // Generate PDF
-    const pdfFilePath = await generateSpeechReportPDF(name, classLevel, gender, center, generatedReportJSON);
+    const pdfFilePath = await generateSpeechReportPDF(name, classLevel, gender, school, generatedReportJSON);
     const cleanedName = name.replace(/\s+/g, '_');
-    const fileName = `${cleanedName}_Speech_Report.pdf`;
-    
+     const timestamp = Date.now(); // creates a unique number based on the current time
+   const fileName = `${cleanedName}_Speech_Report_${timestamp}.pdf`;
+
   
     // Save to DB
     reportDoc.reportUrl = pdfFilePath;

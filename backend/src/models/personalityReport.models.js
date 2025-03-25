@@ -36,7 +36,7 @@ const personalityDataSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    center: {
+    school: {
       type: String,
       required: true,
     },

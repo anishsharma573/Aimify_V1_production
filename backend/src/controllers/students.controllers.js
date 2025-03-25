@@ -125,23 +125,22 @@ const getStudentsByClassAndSubdomain  = asyncHandler(async (req, res) => {
 
 
  const updateStudentProfile = asyncHandler(async (req, res) => {
-  const { userId } = req.params; // Get the student ID from URL parameter
+  const { userId } = req.params;
+
+  // 1. Find the student by ID
   const student = await User.findById(userId);
-
-  // Check if the student exists
   if (!student) {
-    throw new ApiError(404, "Student not found");
+    throw new ApiError(404, 'Student not found');
   }
 
-  // Ensure the logged-in user can only update their own profile
+  // 2. Check ownership (only the user themself can update)
   if (student._id.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "You can only update your own profile");
+    throw new ApiError(403, 'You can only update your own profile');
   }
 
-  // Get the fields from the request body
+  // 3. Destructure optional fields from request body
   const {
     name,
-    
     dateOfBirth,
     phone,
     location,
@@ -153,43 +152,46 @@ const getStudentsByClassAndSubdomain  = asyncHandler(async (req, res) => {
     academics,
     skills,
     parents,
+    gender,
   } = req.body;
 
-  // Logo Upload
-  let logoUrl = student.logo; // Keep existing logo if no new file is provided
+  // 4. Logo upload to Cloudinary if file is provided
+  let logoUrl = student.logo; // Default to existing logo
   if (req.file) {
-    // If a file is provided, upload it to Cloudinary
-    const result = await uploadOnCloudinary(req.file.path);
-    if (!result) {
-      throw new ApiError(500, "Error uploading logo to Cloudinary");
+    const uploadResult = await uploadOnCloudinary(req.file.path);
+    if (!uploadResult) {
+      throw new ApiError(500, 'Error uploading logo to Cloudinary');
     }
-    logoUrl = result.secure_url;
+    logoUrl = uploadResult.secure_url;
   }
 
-  // Update the student profile fields
-  if (name) student.name = name;
- 
-  if (dateOfBirth) student.dateOfBirth = dateOfBirth;
-  if (phone) student.phone = phone;
-  if (location) student.location = location;
-  if (className) student.className = className;
-  if (profile) student.profile = { ...student.profile, ...profile };
-  if (hobbies) student.hobbies = hobbies;
-  if (idol) student.idol = idol;
-  if (goals) student.goals = goals;
-  if (academics) student.academics = academics;
-  if (skills) student.skills = skills;
-  if (parents) student.parents = parents;
+  // 5. Update fields if present in the request body
+  if (name !== undefined) student.name = name;
+  if (dateOfBirth !== undefined) student.dateOfBirth = dateOfBirth;
+  if (phone !== undefined) student.phone = phone;
+  if (location !== undefined) student.location = location;
+  if (className !== undefined) student.className = className;
+  if (profile !== undefined) {
+    // Merge new profile fields into existing 'profile' object
+    student.profile = { ...student.profile, ...profile };
+  }
+  if (hobbies !== undefined) student.hobbies = hobbies;
+  if (idol !== undefined) student.idol = idol;
+  if (goals !== undefined) student.goals = goals;
+  if (academics !== undefined) student.academics = academics;
+  if (skills !== undefined) student.skills = skills;
+  if (parents !== undefined) student.parents = parents;
+  if (gender !== undefined) student.gender = gender;
 
-  // Update logo (profile picture)
+  // 6. Update the logo field (if changed)
   student.logo = logoUrl;
 
-  // Save the updated student profile
+  // 7. Save the document
   const updatedStudent = await student.save();
 
-  // Return the updated profile
-  res.status(200).json({
-    message: "Profile updated successfully",
+  // 8. Return the updated profile in the response
+  return res.status(200).json({
+    message: 'Profile updated successfully',
     data: updatedStudent,
   });
 });

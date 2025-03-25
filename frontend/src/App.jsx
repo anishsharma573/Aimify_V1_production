@@ -18,7 +18,7 @@ import TeachersList from "./teacher/FetchTeacher";
 import AddStudent from "./students/AddStudents";
 import AddTeacher from "./teacher/AddTeacher";
 import StudentLogin from "./students/Auth/StudentLogin";
-
+import HomePage from "./Pages/HomePage";
 
 import ProtectedRoute from "./ProtectedRoute/ProtectedRoute";
 import Unauthorized from "./ProtectedRoute/Unauthorized";
@@ -48,7 +48,8 @@ const MainLayout = () => {
       <ToastContainer />
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<MasterAdminLogin />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/master-admin-login" element={<MasterAdminLogin />} />
         <Route path="/school-admin/login" element={<SchoolAdminLogin />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />

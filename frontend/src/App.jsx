@@ -48,7 +48,7 @@ const MainLayout = () => {
       <ToastContainer />
       <Routes>
         {/* Public Routes */}
-        <Route path="/master-admin-login" element={<MasterAdminLogin />} />
+        <Route path="/" element={<MasterAdminLogin />} />
         <Route path="/school-admin/login" element={<SchoolAdminLogin />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />

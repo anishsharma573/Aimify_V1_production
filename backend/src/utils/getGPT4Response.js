@@ -3,10 +3,9 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-<<<<<<< HEAD
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY; 
-=======
->>>>>>> ac5448a045a7036885cd2b981eeec11f2747405f
+
 /**
  * Calls the GPT-4 API with the given prompt and returns the response.
  * Logs detailed error information if the call fails.

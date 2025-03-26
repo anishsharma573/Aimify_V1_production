@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-
+import errorMiddleware from './middleware/errorMiddleware.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express();
@@ -68,5 +68,5 @@ app.use("/api/v1/set-paper", ExamPaperRoutes);
 app.use("/api/v1/speechReport", SpeechReportRoutes);
 app.use("/api/v1/personalityReport", PersonalityReportRoutes);
 app.use("/api/v1/personalityTest", PersonalityTestRoutes);
-
+app.use(errorMiddleware);
 export default app;

@@ -17,8 +17,9 @@ const generateAccessAndRefreshToken = async (userId) => {
   return { accessToken, refreshToken };
 };
 const teacherLogin = asyncHandler(async (req, res, next) => {
-  const { subdomain, username, password } = req.body;
 
+  const { subdomain, username, password } = req.body;
+ console.log("Subdomain from body:", subdomain);
   if (!subdomain) {
     throw new ApiError(400, "Subdomain is required in the request body");
   }
@@ -27,7 +28,7 @@ const teacherLogin = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "Username and password are required");
   }
 
-  console.log("Subdomain from body:", subdomain);
+ 
 
   // Lookup the school based on the subdomain
   const school = await School.findOne({ subdomain });
